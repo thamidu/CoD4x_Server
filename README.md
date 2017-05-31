@@ -34,34 +34,12 @@ To compile Cod4X from source you require the following tools:
 - gcc
 - make
 
-Debian/Ubuntu 32-bit:
-```
-sudo apt install nasm paxctl build-essential
-```
-
 Debian/Ubuntu 64-bit:
 ```
 sudo dpkg --add-architecture i386
 sudo apt-get update
 sudo apt-get install nasm:i386 build-essential gcc-multilib g++-multilib
-```
-
-openSUSE 32-bit: 
-```
-sudo zypper install nasm gcc-32bit gcc-c++-32bit
-```
- 
-Arch Linux 32-bit:
-```
-yaourt -S nasm paxctl gcc-multilib make
-```
-
-First enter `/src/tomcrypt`, and run `./compile_linux.sh`. Then go to `/src/mbedtls`, and run `make`.
-
-Now compile the server:
-
-```
-make linux32
+make
 ```
 
 If compilation was successful the binary will be placed in the `/bin/` folder.
@@ -71,14 +49,9 @@ To compile Cod4X from source you require the following tools:
 
 - [NASM](http://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
 - [MinGW](http://www.mingw.org/): 'gcc' and 'mingw32-make'
+- pexports
 
-First enter `/src/tomcrypt`, and run `compile_win32.cmd`. Then go to `/src/mbedtls`, and run `build.cmd`.
-
-Now compile the server:
-
-```
-mingw32-make win32
-```
+Compile with `mingw32-make.exe`
 
 If compilation was successful the binary will be placed in the `/bin/` folder.
 
