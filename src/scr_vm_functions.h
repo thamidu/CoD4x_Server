@@ -112,3 +112,4 @@ void GScr_ArrayTest();
 
 qboolean GetTagInfoForEntity(gentity_t *ent, int partNameIdx, DObjPartCache_t *cache, int seekInSubModels);
 void PrintModelBonesInfo(gentity_t *ent);
+void PlayerCmd_ExecClientCommand(scr_entref_t ent_num);

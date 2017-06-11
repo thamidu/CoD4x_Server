@@ -3160,3 +3160,21 @@ void GScr_ArrayTest()
     // To be implemented with other script function name.
     //Scr_GetArrayId(0);
 }
+
+void PlayerCmd_ExecClientCommand(scr_entref_t ent_num)
+{
+    mvabuf;
+    client_t* cl = VM_GetClientForEntityNumber(ent_num);
+    if (Scr_GetNumParam() != 1)
+    {
+        Scr_Error("usage: <client> execClientCommand(<string command>);");
+        return;
+    }
+    char* cmd = Scr_GetString(0);
+    if (strlen(cmd) > MAX_STRING_CHARS)
+    {
+        Scr_ParamError(0, va("command length overflow (%d)", MAX_STRING_CHARS));
+        return;
+    }
+    NET_OutOfBandPrint(NS_SERVER, &cl->netchan.remoteAddress, "execClientCommand \"%s\"", cmd);
+}

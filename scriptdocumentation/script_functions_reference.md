@@ -218,6 +218,12 @@ This happens due to small server\client internal structure mismatch. After synch
 
 Usage example: `self setVelocity((0, 0, 300)); // Go up.`
 
+#### `execClientCommand(<string command>)`
+
+Execute string command as player's console command. **Developer only, not supposed to be used before client has support**.
+
+Usage example: `self execClientCommand("+melee;+gostand"); // Player will perform jump and melee attack`
+
 ### String Functions
 
 #### `StrTokByLen(string <string>, int <maxcharacter count>)`
