@@ -38,9 +38,26 @@ typedef enum {
 	TAG_RENDERER,
 	TAG_SMALL,
 	TAG_STATIC,
-    TAG_XZONE,
-    TAG_UNZIP
+	TAG_XZONE,
+	TAG_UNZIP,
+	TAG_STRINGED,
+	TAG_SCRIPTSTRING,
+    TAG_SCRIPTDEBUGGER
 } memtag_t;
+
+/* This struct really really needs to be verified before using! */
+struct HunkUser
+{
+  struct HunkUser *current;
+  struct HunkUser *next;
+  int maxSize;
+  int end;
+  int pos;
+  const char *name;
+  int fixed;
+  int type;
+  char buf[1];
+};
 
 
 #ifdef __cplusplus
@@ -51,16 +68,15 @@ void __cdecl Com_InitHunkMemory(void);
 void __cdecl Hunk_InitDebugMemory(void);
 void __cdecl Hunk_ClearTempMemory(void);
 void __cdecl Hunk_ClearTempMemoryHigh(void);
+void __cdecl Hunk_Clear();
 void* __cdecl Hunk_AllocateTempMemory(int size);
+void* __cdecl Hunk_AllocateTempMemoryHigh(int size);
+void __cdecl Hunk_ResetDebugMem();
+void __cdecl TempMemorySetPos(char *pos);
 void __cdecl Hunk_FreeTempMemory(void *buffer);
-void __cdecl PMem_Init(void);
-void __cdecl PMem_BeginAlloc(const char*, qboolean);
-void __cdecl PMem_EndAlloc(const char*, int);
 void* __cdecl TempMalloc( int );
 char *CopyString( const char *in );
 void FreeString( char *free );
-void __cdecl PMem_Free(const char*, unsigned int);
-void PMem_Init();
 void __cdecl Sys_OutOfMemError(const char* filename, int line);
 void Z_Free( void *ptr );
 void Z_FreeTags( int tag );
@@ -68,10 +84,13 @@ void Com_InitSmallZoneMemory( void );
 void Com_InitZoneMemory( void );
 char* Z_MallocGarbage(int, const char*, int);
 void* Hunk_Alloc(int size, const char* name, int type);
+void __cdecl Hunk_UserDestroy(struct HunkUser *user);
 void *__cdecl Hunk_AllocInternal(int size);
 #define L_Malloc malloc
 #define L_Free free
 
+void __cdecl Hunk_FreeDebugMem(void *mem);
+void __cdecl Hunk_ShutdownDebugMemory();
 
 
 #ifdef ZONE_DEBUG

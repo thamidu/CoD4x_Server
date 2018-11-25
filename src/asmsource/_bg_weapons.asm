@@ -4,7 +4,7 @@
 	extern Com_sprintf
 	extern Com_Error
 	extern ParseConfigStringToStruct
-	extern DB_FindXAssetHeader
+	extern DB_FindXAssetHeaderReal
 	extern BG_LoadWeaponDefInternal
 	extern SetConfigString
 	extern Com_DPrintf
@@ -59,6 +59,8 @@
 	extern player_breath_fire_delay
 	extern perk_weapRateMultiplier
 	extern player_burstFireCooldown
+;	extern Profile_Begin
+;	extern Profile_End
 
 ;Exports of bg_weapons:
 	global bg_numAmmoTypes
@@ -251,7 +253,7 @@ BG_LoadWeaponDef_FastFile:
 BG_LoadWeaponDef_FastFile_10:
 	mov [esp+0x4], eax
 	mov dword [esp], 0x17
-	call DB_FindXAssetHeader
+	call DB_FindXAssetHeaderReal
 	leave
 	ret
 
@@ -4888,7 +4890,7 @@ BG_GetWeaponIndexForName_40:
 BG_GetWeaponIndexForName_60:
 	mov [esp+0x4], edi
 	mov dword [esp], 0x17
-	call DB_FindXAssetHeader
+	call DB_FindXAssetHeaderReal
 	mov [esp+0x4], edi
 	mov dword [esp], 0x17
 	call DB_IsXAssetDefault
@@ -6081,7 +6083,9 @@ BG_CalculateWeaponPosition_Sway_60:
 	mov eax, [edx]
 	mov [esp+0x4], eax
 	movss [esp], xmm0
+;	call Profile_Begin
 	call DiffTrackAngle
+;	call Profile_End
 	mov eax, [ebp+0x14]
 	fstp dword [eax]
 	movss xmm0, dword [ebp-0x3c]
@@ -8491,10 +8495,8 @@ _cstring_large:		db "large",0
 
 ;All constant floats and doubles:
 SECTION .rdata
-_data16_7fffffff:		dd 0x7fffffff, 0x0, 0x0, 0x0	; OWORD
 _float_0_25000000:		dd 0x3e800000	; 0.25
 _float_1_00000000:		dd 0x3f800000	; 1
-_data16_80000000:		dd 0x80000000, 0x0, 0x0, 0x0	; OWORD
 _float_255_00000000:		dd 0x437f0000	; 255
 _double_3_14159265:		dq 0x400921fb54442d18	; 3.14159
 _double_6_28318531:		dq 0x401921fb54442d18	; 6.28319
@@ -8540,3 +8542,6 @@ _float__0_75000000:		dd 0xbf400000	; -0.75
 _float_60_00000000:		dd 0x42700000	; 60
 _float_128_00000000:		dd 0x43000000	; 128
 
+align   16,db 0
+_data16_7fffffff:		dd 0x7fffffff, 0x0, 0x0, 0x0	; DQWORD
+_data16_80000000:		dd 0x80000000, 0x0, 0x0, 0x0	; DQWORD

@@ -71,6 +71,7 @@
 	extern SL_FindString
 	extern ms_rand
 	extern SV_LocateGameData
+	extern G_DObjCalcBone
 
 ;Exports of g_utils_mp:
 	global cached_models
@@ -95,10 +96,9 @@
 	global G_EffectIndex
 	global G_GeneralLink
 	global G_InitGentity
-	global G_DObjCalcBone
 	global G_DObjCalcPose
 	global G_EntDetachAll
-	global G_SafeDObjFree
+	global _Z14G_SafeDObjFreeP9gentity_s
 	global G_SetFixedLink
 	global G_MaterialIndex
 	global G_OverrideModel
@@ -114,7 +114,6 @@
 	global G_SoundAliasIndex
 	global G_SpawnPlayerClone
 	global G_CalcTagParentAxis
-	global G_GetEntityTypeName
 	global G_DObjGetWorldTagPos
 	global G_AddPredictableEvent
 	global G_EntLinkToWithOffset
@@ -1365,60 +1364,6 @@ G_InitGentity:
 	nop
 
 
-;G_DObjCalcBone(gentity_s const*, int)
-G_DObjCalcBone:
-	push ebp
-	mov ebp, esp
-	push edi
-	push esi
-	push ebx
-	sub esp, 0x2c
-	mov esi, [ebp+0x8]
-	mov eax, [esi]
-	mov [esp], eax
-	call Com_GetServerDObj
-	mov ebx, eax
-	mov eax, [ebp+0xc]
-	mov [esp+0x4], eax
-	mov [esp], ebx
-	call SV_DObjCreateSkelForBone
-	test eax, eax
-	jz G_DObjCalcBone_10
-	add esp, 0x2c
-	pop ebx
-	pop esi
-	pop edi
-	pop ebp
-	ret
-G_DObjCalcBone_10:
-	lea edi, [ebp-0x28]
-	mov [esp+0x8], edi
-	mov eax, [ebp+0xc]
-	mov [esp+0x4], eax
-	mov [esp], ebx
-	call DObjGetHierarchyBits
-	movzx eax, byte [esi+0x16e]
-	lea eax, [eax+eax*4]
-	shl eax, 0x3
-	add eax, entityHandlers
-	mov eax, [eax+0x1c]
-	test eax, eax
-	jz G_DObjCalcBone_20
-	mov [esp+0x4], edi
-	mov [esp], esi
-	call eax
-G_DObjCalcBone_20:
-	mov [esp+0x4], edi
-	mov [esp], ebx
-	call DObjCalcSkel
-	add esp, 0x2c
-	pop ebx
-	pop esi
-	pop edi
-	pop ebp
-	ret
-
-
 ;G_DObjCalcPose(gentity_s*, int*)
 G_DObjCalcPose:
 	push ebp
@@ -1502,7 +1447,7 @@ G_EntDetachAll_10:
 
 
 ;G_SafeDObjFree(gentity_s*)
-G_SafeDObjFree:
+_Z14G_SafeDObjFreeP9gentity_s:
 	push ebp
 	mov ebp, esp
 	mov eax, [ebp+0x8]
@@ -2279,17 +2224,6 @@ G_CalcTagParentAxis_10:
 	pop ebp
 	ret
 	nop
-
-
-;G_GetEntityTypeName(gentity_s const*)
-G_GetEntityTypeName:
-	push ebp
-	mov ebp, esp
-	mov eax, [ebp+0x8]
-	mov eax, [eax+0x4]
-	mov eax, [eax*4+entityTypeNames]
-	pop ebp
-	ret
 
 
 ;G_DObjGetWorldTagPos(gentity_s*, unsigned int, float*)
@@ -3337,7 +3271,6 @@ G_crandom:
 ;Initialized global or static variables of g_utils_mp:
 SECTION .data
 _ZZ22G_LocalizedStringIndexPKcE12origErrorMsg: dd _cstring_localized_string, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0
-entityTypeNames: dd _cstring_et_general, _cstring_et_player, _cstring_et_player_corpse, _cstring_et_item, _cstring_et_missile, _cstring_et_invisible, _cstring_et_scriptmover, _cstring_et_sound_blend, _cstring_et_fx, _cstring_et_loop_fx, _cstring_et_primary_light, _cstring_et_mg42, _cstring_et_helicopter, _cstring_et_plane, _cstring_et_vehicle, _cstring_et_vehicle_collm, _cstring_et_vehicle_corps
 
 
 ;Initialized constant data of g_utils_mp:
@@ -3366,24 +3299,6 @@ _cstring_g_findconfigstri1:		db 15h,"G_FindConfigstringIndex: overflow (%d): ",2
 _cstring_i_s:		db "%i: %s",0ah,0
 _cstring_g_spawn_no_free_:		db 15h,"G_Spawn: no free entities",0
 _cstring_localized_string:		db "localized string",0
-_cstring_et_general:		db "ET_GENERAL",0
-_cstring_et_player:		db "ET_PLAYER",0
-_cstring_et_player_corpse:		db "ET_PLAYER_CORPSE",0
-_cstring_et_item:		db "ET_ITEM",0
-_cstring_et_missile:		db "ET_MISSILE",0
-_cstring_et_invisible:		db "ET_INVISIBLE",0
-_cstring_et_scriptmover:		db "ET_SCRIPTMOVER",0
-_cstring_et_sound_blend:		db "ET_SOUND_BLEND",0
-_cstring_et_fx:		db "ET_FX",0
-_cstring_et_loop_fx:		db "ET_LOOP_FX",0
-_cstring_et_primary_light:		db "ET_PRIMARY_LIGHT",0
-_cstring_et_mg42:		db "ET_MG42",0
-_cstring_et_helicopter:		db "ET_HELICOPTER",0
-_cstring_et_plane:		db "ET_PLANE",0
-_cstring_et_vehicle:		db "ET_VEHICLE",0
-_cstring_et_vehicle_collm:		db "ET_VEHICLE_COLLMAP",0
-_cstring_et_vehicle_corps:		db "ET_VEHICLE_CORPSE",0
-
 
 
 ;All constant floats and doubles:

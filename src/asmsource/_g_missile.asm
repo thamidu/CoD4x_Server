@@ -11,6 +11,7 @@
 	extern AxisToQuat
 	extern QuatSlerp
 	extern Vec4Normalize
+	extern Vec3Normalize
 	extern UnitQuatToForward
 	extern colorBlue
 	extern G_DebugLineWithDuration
@@ -86,6 +87,7 @@
 	extern va
 	extern Scr_Error
 	extern Scr_GetVector
+	extern missile_frametime
 
 ;Exports of g_missile:
 	global attrGlob
@@ -352,7 +354,7 @@ JavelinRotateDir_40:
 	movss xmm0, dword [_float_1_00000000]
 	movss xmm3, dword [ebp-0x80]
 	addss xmm3, xmm0
-	mulss xmm3, [_float__0_50000000]
+	mulss xmm3, [missile_frametime]
 	addss xmm0, xmm3
 	mulss xmm0, [_float_180_00000000]
 	movss [ebp-0x80], xmm0
@@ -385,7 +387,7 @@ JavelinRotateDir_10:
 	movss xmm2, dword [eax+0xc]
 	jmp JavelinRotateDir_40
 JavelinRotateDir_20:
-	divss xmm0, dword [_float_0_05000000]
+	divss xmm0, dword [missile_frametime]
 	ucomiss xmm2, xmm0
 	ja JavelinRotateDir_50
 	movaps xmm1, xmm2
@@ -1971,7 +1973,7 @@ MissileTrajectory_30:
 	jbe MissileTrajectory_50
 	lea ebx, [esi+0x24]
 	lea eax, [esi+0x1d0]
-	movss xmm1, dword [_float_0_05000000]
+	movss xmm1, dword [missile_frametime]
 	movss xmm0, dword [esi+0x1d0]
 	mulss xmm0, xmm1
 	addss xmm0, [esi+0x24]
@@ -2042,7 +2044,7 @@ MissileTrajectory_70:
 MissileTrajectory_180:
 	lea edx, [esi+0x18]
 	lea eax, [esi+0x24]
-	movss xmm1, dword [_float_0_05000000]
+	movss xmm1, dword [missile_frametime]
 	movss xmm0, dword [esi+0x24]
 	mulss xmm0, xmm1
 	addss xmm0, [esi+0x18]
@@ -2104,7 +2106,7 @@ MissileTrajectory_120:
 	jmp MissileTrajectory_140
 MissileTrajectory_40:
 	divss xmm1, dword [edx+0x57c]
-	mulss xmm1, [_float_0_05000000]
+	mulss xmm1, [missile_frametime]
 	jmp MissileTrajectory_150
 MissileTrajectory_130:
 	cmp dword [esi+0x1e8], 0x1
@@ -2286,7 +2288,7 @@ MissileTrajectory_480:
 	andps xmm3, xmm5
 	andnps xmm0, xmm2
 	orps xmm0, xmm3
-	mulss xmm0, [_float_0_05000000]
+	mulss xmm0, [missile_frametime]
 	movss xmm4, dword [ebp-0x108]
 	jmp MissileTrajectory_280
 MissileTrajectory_210:
@@ -2387,7 +2389,7 @@ MissileTrajectory_490:
 	ucomiss xmm0, [_float_0_00000000]
 	jbe MissileTrajectory_340
 MissileTrajectory_330:
-	movss xmm0, dword [_float_0_05000000]
+	movss xmm0, dword [missile_frametime]
 	mov eax, [missileJavAccelClimb]
 	mulss xmm0, [eax+0xc]
 	addss xmm1, xmm0
@@ -2492,7 +2494,7 @@ MissileTrajectory_230:
 	movss xmm0, dword [ebp-0x90]
 	mulss xmm0, xmm4
 	movss [ebp-0x8c], xmm0
-	movss xmm0, dword [_float_0_05000000]
+	movss xmm0, dword [missile_frametime]
 	movss xmm1, dword [ebp-0x8c]
 	mulss xmm1, xmm0
 	movss [ebp-0x8c], xmm1
@@ -2591,7 +2593,7 @@ MissileTrajectory_220:
 	jbe MissileTrajectory_470
 	movss xmm3, dword [ebp-0x90]
 	mulss xmm3, xmm2
-	movss xmm0, dword [_float_0_05000000]
+	movss xmm0, dword [missile_frametime]
 	mulss xmm3, xmm0
 	movss [ebp-0x8c], xmm3
 	movss xmm4, dword [ebp-0x94]
@@ -2599,7 +2601,7 @@ MissileTrajectory_220:
 	mulss xmm4, xmm0
 	jmp MissileTrajectory_380
 MissileTrajectory_340:
-	movss xmm0, dword [_float_0_05000000]
+	movss xmm0, dword [missile_frametime]
 	mov eax, [missileJavAccelDescend]
 	mulss xmm0, [eax+0xc]
 	addss xmm1, xmm0
@@ -2702,7 +2704,7 @@ MissileTrajectory_560:
 	andnps xmm1, xmm0
 	movaps xmm0, xmm1
 	orps xmm0, xmm3
-	mulss xmm0, [_float_0_05000000]
+	mulss xmm0, [missile_frametime]
 	jmp MissileTrajectory_280
 MissileTrajectory_530:
 	cvtsi2ss xmm0, dword [ebx+0x568]
@@ -2714,7 +2716,7 @@ MissileTrajectory_470:
 	xorps xmm1, [_data16_80000000]
 	movss xmm6, dword [ebp-0x90]
 	mulss xmm6, xmm1
-	movss xmm0, dword [_float_0_05000000]
+	movss xmm0, dword [missile_frametime]
 	mulss xmm6, xmm0
 	movss [ebp-0x8c], xmm6
 	movss xmm4, dword [ebp-0x94]
@@ -3563,6 +3565,9 @@ G_RunMissile_20:
 	pop ebp
 	ret
 G_RunMissile_210:
+	lea edx, [ebp-0xb8]
+	mov [esp], edx
+	call Vec3Normalize
 	lea eax, [ebp-0x48]
 	mov [esp+0xc], eax
 	lea eax, [ebp-0x24]
@@ -3719,6 +3724,7 @@ G_RunMissile_420:
 	jnz G_RunMissile_430
 	mov eax, [edx+0xc4]
 	mov [esp], eax
+G_RunMissile_Destabilize_inlinestart:
 	call BG_GetWeaponDef
 	mov edi, eax
 	mov edx, [ebp+0x8]
@@ -3779,7 +3785,7 @@ G_RunMissile_900:
 	mov edx, [ebp+0x8]
 	add edx, 0x3c
 	mov [ebp-0x110], edx
-	movss xmm1, dword [_float_0_05000000]
+	movss xmm1, dword [missile_frametime]
 	mov eax, [ebp+0x8]
 	movss xmm0, dword [eax+0x1d0]
 	mulss xmm0, xmm1
@@ -4591,7 +4597,7 @@ G_RunMissile_550:
 	jnz G_RunMissile_910
 	jnp G_RunMissile_430
 G_RunMissile_910:
-	movss xmm0, dword [_float_0_05000000]
+	movss xmm0, dword [missile_frametime]
 	mulss xmm7, xmm0
 	mov edx, [ebp-0x12c]
 	addss xmm7, [edx]
@@ -4922,7 +4928,7 @@ G_ExplodeMissile_10:
 	sub eax, [esi+0x1b8]
 	cmp eax, 0xea60
 	jg G_ExplodeMissile_80
-	mov dword [esi+0x19c], 0x32
+	mov dword [esi+0x19c], 0x32 ;nextthink = 50
 	jmp G_ExplodeMissile_90
 G_ExplodeMissile_60:
 	mov ecx, [ebp-0x94]
@@ -6237,18 +6243,15 @@ _float_0_10000000:		dd 0x3dcccccd	; 0.1
 _float_0_00277778:		dd 0x3b360b61	; 0.00277778
 _float_0_50000000:		dd 0x3f000000	; 0.5
 _float_360_00000000:		dd 0x43b40000	; 360
-_data16_7fffffff:		dd 0x7fffffff, 0x0, 0x0, 0x0	; OWORD
 _float_80_00000000:		dd 0x42a00000	; 80
 _float_0_30000001:		dd 0x3e99999a	; 0.3
 _float_0_85000002:		dd 0x3f59999a	; 0.85
-_data16_80000000:		dd 0x80000000, 0x0, 0x0, 0x0	; OWORD
 _float_45_00000000:		dd 0x42340000	; 45
 _float_90_00000000:		dd 0x42b40000	; 90
 _float_180_00000000:		dd 0x43340000	; 180
 _float_0_25000000:		dd 0x3e800000	; 0.25
 _float_1_00000000:		dd 0x3f800000	; 1
-_float__0_50000000:		dd 0xbf000000	; -0.5
-_float_0_05000000:		dd 0x3d4ccccd	; 0.05
+_float_0_05000000:		dd 0x3c888889	; 0.0166667
 _float_100_00000000:		dd 0x42c80000	; 100
 _float__2_00000000:		dd 0xc0000000	; -2
 _float_0_69999999:		dd 0x3f333333	; 0.7
@@ -6283,3 +6286,6 @@ _float_16_00000000:		dd 0x41800000	; 16
 _float__16_00000000:		dd 0xc1800000	; -16
 _float_120_00000000:		dd 0x42f00000	; 120
 
+align   16,db 0
+_data16_7fffffff:		dd 0x7fffffff, 0x0, 0x0, 0x0	; DQWORD
+_data16_80000000:		dd 0x80000000, 0x0, 0x0, 0x0	; DQWORD

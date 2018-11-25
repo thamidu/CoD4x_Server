@@ -1,18 +1,27 @@
+#include "null_client.h"
 #include "q_shared.h"
 #include "sys_thread.h"
 #include "cvar.h"
 
-//#define COMPILER_GCC
-#define DX_TO_GL_ABSTRACTION
-#define POSIX
-#include "togl/rendermechanism.h"
+
+
+
+#ifdef _WIN32
+#include <d3d9.h>
+#endif
+
+
 #include "qcommon_io.h"
 #include "xassets.h"
 #include "qcommon_mem.h"
+#include "xassets/xmodel.h"
+#include "xassets/gfxworld.h"
+
 
 cvar_t* r_reflectionProbeGenerate;
 cvar_t* r_modelVertColor;
-
+struct GfxWorld s_world;
+byte cgMedia[0x27C0]; 
 
 
 extern "C"
@@ -27,6 +36,7 @@ void R_ReflectionProbeRegisterDvars()
 {
 	r_reflectionProbeGenerate = Cvar_RegisterBool("r_reflectionProbeGenerate", qfalse, CVAR_ROM, "Probe reflections");
 }
+
 
 /*
 void XAnimFreeList(){};
@@ -114,7 +124,7 @@ void __cdecl DB_SaveSounds()
 {
 }
 
-struct Material *__cdecl Material_RegisterHandle(const char *name, int imageTrack)
+Material* __cdecl Material_RegisterHandle(const char *name, int imageTrack)
 {
 	return NULL;
 }
@@ -156,8 +166,9 @@ void __cdecl Load_SndAliasCustom(snd_alias_list_t **name)
   }
 }
 
-void __cdecl Load_SetSoundData(byte **arg0, MssSound *a1)
+void __cdecl Load_SetSoundData(byte **data, MssSound *sound)
 {
+    sound->data = NULL;
 }
 
 void __cdecl Material_UploadShaders(struct MaterialTechniqueSet *techset)
@@ -218,12 +229,12 @@ double __cdecl R_GetAdjustedLodDist(float dist, enum XModelLodRampType lodRampTy
     return 0;
 }
 
-struct FxEffectDef *__cdecl FX_Register(const char *name)
+FxEffectDef *__cdecl FX_Register(const char *name)
 {
     return NULL;
 }
 
-struct snd_alias_t* __cdecl Com_FindSoundAlias(const char *name)
+snd_alias_list_t* __cdecl Com_FindSoundAlias(const char *name)
 {
     return NULL;
 }
@@ -268,4 +279,82 @@ int SND_GetEntChannelCount(void)
     return 0;
 }
 
+int __cdecl FS_GetModList(char *listbuf, int bufsize)
+{
+    return 0;
 }
+
+void CL_ShutdownHunkUsers()
+{
+}
+
+void SND_ShutdownChannels()
+{
+}
+
+void __cdecl CG_TraceCapsule(struct trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentMask)
+{
+
+}
+
+const char* SND_GetEntChannelName(int index)
+{
+    return "server";
+}
+
+void __cdecl Com_UnloadSoundAliases(snd_alias_system_t type)
+{
+
+}
+void Com_LoadSoundAliases()
+{
+
+}
+
+
+XAssetHeader* Com_TryFindSoundAlias(const char* name)
+{
+    return (XAssetHeader*)-1;
+}
+
+void SND_AddPhysicsSound(snd_alias_list_t *a1, float *a2)
+{
+
+}
+
+
+void __cdecl R_ReleaseDXDeviceOwnership()
+{
+
+}
+
+
+void R_UnlockVertexBuffer(IDirect3DVertexBuffer9* vertexbuf){}
+void R_FreeStaticVertexBuffer(IDirect3DVertexBuffer9* vertexbuf){}
+void R_UnlockIndexBuffer(IDirect3DIndexBuffer9* indexbuf){}
+void R_FreeStaticIndexBuffer(IDirect3DIndexBuffer9* indexbuf){}
+void Material_DirtyTechniqueSetOverrides(){}
+
+};
+
+class OpaqueContextRef
+{
+};
+
+class MacDisplay
+{
+    static OpaqueContextRef* GetSharedContext();
+    static void SetCurrentContext(OpaqueContextRef*);
+};
+
+
+OpaqueContextRef* MacDisplay::GetSharedContext()
+{
+    return NULL;
+}
+
+void MacDisplay::SetCurrentContext(OpaqueContextRef* ctx)
+{
+
+}
+

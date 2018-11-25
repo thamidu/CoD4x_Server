@@ -176,7 +176,7 @@
     __cdecl void Plugin_ChatPrintf(int slot, const char *fmt, ...);          // Print to player's chat (-1 for all)
     __cdecl void Plugin_BoldPrintf(int slot, const char *fmt, ...);          // Print to the player's screen (-1 for all)
     __cdecl char *Plugin_GetPlayerName(int slot);                            // Get a name of a player
-    __cdecl void Plugin_AddCommand(char *name, xcommand_t command, int defaultpower); // Add a server command
+    __cdecl void Plugin_AddCommand(const char *name, xcommand_t command, int defaultpower); // Add a server command
     __cdecl void Plugin_RemoveCommand(char *name); //Removes a command. Works also with non plugin added commands.
     __cdecl void Plugin_AddCommandForClientToWhitelist(int clnum, const char* cmd); //Use this function to allow the player clnum to execute it whatever his powerpoints are
     __cdecl void *Plugin_Malloc(size_t size);                                // Same as stdlib.h function malloc
@@ -256,7 +256,7 @@
     __cdecl void Plugin_Scr_AddVector( vec3_t vec );
     __cdecl void Plugin_Scr_AddArray( void );
     __cdecl void Plugin_Scr_MakeArray( void );
-    __cdecl void Plugin_Scr_AddArrayKey( int strIdx );
+    __cdecl void Plugin_Scr_AddArrayKeys( int strIdx );
     __cdecl short Plugin_Scr_ExecEntThread( gentity_t* ent, int callbackHook, unsigned int numArgs);
     __cdecl short Plugin_Scr_ExecThread( int callbackHook, unsigned int numArgs);
     __cdecl void Plugin_Scr_FreeThread( short threadId);
@@ -273,7 +273,8 @@
     __cdecl playerState_t *Plugin_SV_GameClientNum( int num ); //Retrives the playerState_t* object from a client number
 
     __cdecl gentity_t* Plugin_GetGentityForEntityNum(int entnum);
-    __cdecl client_t* Plugin_GetClientForClientNum(int clientnum);
+    __cdecl client_t* Plugin_GetClientForClientNum(int clientnum); //Can return NULL have to check
+    __cdecl unsigned int Plugin_GetClientNumForClient(client_t* cl);
 
     __cdecl const char* Plugin_SL_ConvertToString(int index);
 
@@ -282,7 +283,7 @@
 
     /* If someone called a command the following functions return data about who invoked it */
     __cdecl int Plugin_Cmd_GetInvokerSlot();                              //clientnum of commandinvoker. -1 if undefined
-    __cdecl int Plugin_Cmd_GetInvokerUID();                              //UID of commandinvoker. 0 if undefined
+    __cdecl int Plugin_Cmd_GetInvokerUID();                              //UID of commandinvoker. 0 if undefined . Deprecated in COD4x18 Do not Use this !
     __cdecl int Plugin_Cmd_GetInvokerClnum();                            //Client slot number of invoker. -1 if undefined
     __cdecl int Plugin_Cmd_GetInvokerPower();                            //Power points of command invoker. 100 if undefined or have all permissions
     __cdecl uint64_t Plugin_Cmd_GetInvokerSteamID();                     //Steam ID of invoker. 0 if undefined
@@ -361,3 +362,5 @@
     __cdecl void Plugin_SleepMSec(int msec);
     __cdecl void Plugin_SetStat(int clientNum, signed int index, int value);
     __cdecl int Plugin_GetStat(int clientNum, signed int index);
+
+    __cdecl const char* Plugin_GetCommonVersionString(); //return cod4x version

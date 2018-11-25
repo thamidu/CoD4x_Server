@@ -47,7 +47,8 @@ These commands can only be entered from stdin or by a remote operator datagram
 #include "sys_main.h"
 #include "sapi.h"
 #include "scr_vm.h"
-
+#include "cscr_memorytree.h"
+#include "cscr_variable.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -483,7 +484,7 @@ static void SV_DumpUser_f( void ) {
 	}
 
 	if ( Cmd_Argc() != 2 ) {
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"Usage: dumpuser <userid>\n");
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"Usage: dumpuser <userid>\n");
 		return;
 	}
 
@@ -499,15 +500,15 @@ static void SV_DumpUser_f( void ) {
     char psti[128];
     SV_SApiSteamIDToString(cl.cl->playerid, psti, sizeof(psti));
 
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"PlayerID             %s\n", psti);
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"PlayerID             %s\n", psti);
 
 		if(cl.cl->steamid > 0)
     {
       char ssti[128];
       SV_SApiSteamIDToString(cl.cl->steamid, ssti, sizeof(ssti));
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"PlayerSteamID        %s\n", ssti);
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"PlayerSteamID        %s\n", ssti);
 		}else{
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"PlayerSteamID        N/A\n");
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"PlayerSteamID        N/A\n");
 		}
   } else {
 		    Com_Printf(CON_CHANNEL_DONT_FILTER,"Player is not on server.\n");
@@ -537,76 +538,75 @@ static void SV_MiniStatus_f( void ) {
 		return;
 	}
 
-	Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"map: %s\n", sv_mapname->string );
+	Com_Printf(CON_CHANNEL_DONT_FILTER,"map: %s\n", sv_mapname->string );
 
-	Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"num score ping playerid            steamid           name                             address                                             FPS XVer\n");
+	Com_Printf(CON_CHANNEL_DONT_FILTER,"num score ping playerid            steamid           name                             address                                             FPS XVer\n");
 
-	Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"--- ----- ---- ------------------- ----------------- -------------------------------- --------------------------------------------------- --- ----------- \n");
+	Com_Printf(CON_CHANNEL_DONT_FILTER,"--- ----- ---- ------------------- ----------------- -------------------------------- --------------------------------------------------- --- ----------- \n");
 	for (i=0,cl=svs.clients, gclient = level.clients ; i < sv_maxclients->integer ; i++, cl++, gclient++)
 	{
 		if (!cl->state)
 			continue;
 
 		if(odd)
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"^1");
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"^1");
 		else
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"^7");
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"^7");
 
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%3i ", i);
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%5i ", gclient->sess.scoreboard.score);
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"%3i ", i);
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"%5i ", gclient->sess.score);
 		if (cl->state == CS_CONNECTED)
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"CNCT ");
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"CNCT ");
 		else if (cl->state == CS_ZOMBIE)
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"ZMBI ");
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"ZMBI ");
 		else if (cl->state == CS_PRIMED)
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"PRIM ");
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"PRIM ");
 		else
 		{
 			ping = cl->ping < 9999 ? cl->ping : 9999;
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%4i ", ping);
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"%4i ", ping);
 		}
-
     SV_SApiSteamIDToString(cl->steamid, ssti, sizeof(ssti));
     SV_SApiSteamIDToString(cl->playerid, psti, sizeof(psti));
 
-    Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%s", psti );
+    Com_Printf(CON_CHANNEL_DONT_FILTER,"%s", psti );
 
     l = 20 - strlen(psti);
     j = 0;
 
     do
     {
-      Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER," ");
+      Com_Printf(CON_CHANNEL_DONT_FILTER," ");
       j++;
     } while(j < l);
 
-    Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%s", ssti );
+    Com_Printf(CON_CHANNEL_DONT_FILTER,"%s", ssti );
 
     l = 18 - strlen(ssti);
     j = 0;
 
     do
     {
-      Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER," ");
+      Com_Printf(CON_CHANNEL_DONT_FILTER," ");
       j++;
     } while(j < l);
 
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%s", cl->name);
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"%s", cl->name);
 
 		// TTimo adding a ^7 to reset the color
 		// NOTE: colored names in status breaks the padding (WONTFIX)
 
 		if(odd)
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"^1");
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"^1");
 		else
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"^7");
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"^7");
 
 		l = 33 - Q_PrintStrlen(cl->name);
 		j = 0;
 
 		do
 		{
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER," ");
+			Com_Printf(CON_CHANNEL_DONT_FILTER," ");
 			j++;
 		} while(j < l);
 		if(Cmd_GetInvokerPower() > 40)
@@ -615,7 +615,7 @@ static void SV_MiniStatus_f( void ) {
 		}else{
 			s = NET_AdrMaskToString( &cl->netchan.remoteAddress );
 		}
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%s", s);
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"%s", s);
 		l = 52 - strlen(s);
 		j = 0;
 
@@ -643,7 +643,7 @@ static void SV_MiniStatus_f( void ) {
 		}
 
 		odd = ~odd;
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"\n");
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"\n");
 	}
 }
 
@@ -658,10 +658,12 @@ static void SV_Status_f( void ) {
 	int			i, j, l;
 	client_t	*cl;
 	gclient_t	*gclient;
-	const char		*s;
+	const char* s;
 	int			ping;
-  char psti[128];
-  char ssti[128];
+	char 		psti[128];
+	char 		ssti[128];
+
+	
 
 	// make sure server is running
 	if ( !com_sv_running->boolean ) {
@@ -669,121 +671,131 @@ static void SV_Status_f( void ) {
 		return;
 	}
 
+	CON_DisableDraw();
 
-  if(sv_legacymode->boolean)
-  {
-	Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"map: %s\n", sv_mapname->string );
-	Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"num score ping guid                             name            lastmsg address                                              qport rate\n");
-	Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"--- ----- ---- -------------------------------- --------------- ------- ---------------------------------------------------- ----- -----\n");
-  }else{
-	Com_Printf(CON_CHANNEL_DONT_FILTER,"hostname: %s\n", sv_hostname->string);
-	Com_Printf(CON_CHANNEL_DONT_FILTER,"version : %s\n", com_version->string);
-	netadr_t* outadr = NET_GetDefaultCommunicationSocket(NA_IP);
-	Com_Printf(CON_CHANNEL_DONT_FILTER,"udp/ip  : %s\n", NET_AdrToString(outadr));
-	Com_Printf(CON_CHANNEL_DONT_FILTER,"os      : %s\n", OS_STRING);
-	Com_Printf(CON_CHANNEL_DONT_FILTER,"type    : dedicated server\n");
-	Com_Printf(CON_CHANNEL_DONT_FILTER,"map     : %s\n", sv_mapname->string);
-	Com_Printf(CON_CHANNEL_DONT_FILTER,"\n");
+	if(sv_legacymode->boolean)
+	{
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"map: %s\n", sv_mapname->string );
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"num score ping guid                             name            lastmsg address                                              qport rate\n");
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"--- ----- ---- -------------------------------- --------------- ------- ---------------------------------------------------- ----- -----\n");
+	}
+	else
+	{
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"hostname: %s\n", sv_hostname->string);
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"version : %s\n", com_version->string);
+		netadr_t* outadr = NET_GetDefaultCommunicationSocket(NA_IP);
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"udp/ip  : %s\n", NET_AdrToString(outadr));
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"os      : %s\n", OS_STRING);
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"type    : dedicated server\n");
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"map     : %s\n", sv_mapname->string);
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"\n");
 
-	Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"num score ping playerid            steamid           name                             lastmsg address                                              qport rate\n");
-	Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"--- ----- ---- ------------------- ----------------- -------------------------------- ------- ---------------------------------------------------- ----- -----\n");
-  }
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"num score ping playerid            steamid           name                             lastmsg address                                              qport rate\n");
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"--- ----- ---- ------------------- ----------------- -------------------------------- ------- ---------------------------------------------------- ----- -----\n");
+	}
+
 
 	for (i=0,cl=svs.clients, gclient = level.clients; i < sv_maxclients->integer ; i++, cl++, gclient++)
 	{
 		if (!cl->state)
 			continue;
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%3i ", i);
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%5i ", gclient->sess.scoreboard.score);
+		
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"%3i ", i);
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"%5i ", gclient->sess.score);
+		
 		if (cl->state == CS_CONNECTED)
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"CNCT ");
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"CNCT ");
 		else if (cl->state == CS_ZOMBIE)
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"ZMBI ");
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"ZMBI ");
 		else if (cl->state == CS_PRIMED)
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"PRIM ");
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"PRIM ");
 		else
 		{
 			ping = cl->ping < 9999 ? cl->ping : 9999;
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%4i ", ping);
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"%4i ", ping);
 		}
 /*
     char psti[128];
     SV_SApiSteamIDToString(cl.cl->playerid, psti, sizeof(psti));
 */
-    if(sv_legacymode->boolean)
-    {
-        Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%s", cl->legacy_pbguid );
+		if(sv_legacymode->boolean)
+		{
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"%s", cl->legacy_pbguid );
 
-    		l = 33 - strlen(cl->legacy_pbguid);
-    		j = 0;
+			l = 33 - strlen(cl->legacy_pbguid);
+			j = 0;
 
-    		do
-    		{
-    			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER," ");
-    			j++;
-    		} while(j < l);
+			do
+			{
+				Com_Printf(CON_CHANNEL_DONT_FILTER," ");
+				j++;
+			} while(j < l);
 
-        Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%s", cl->shortname);
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"%.15s", cl->name);
 
-    		// TTimo adding a ^7 to reset the color
-    		// NOTE: colored names in status breaks the padding (WONTFIX)
-    		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"^7");
-    		l = 16 - Q_PrintStrlen(cl->shortname);
-    		j = 0;
+			// TTimo adding a ^7 to reset the color
+			// NOTE: colored names in status breaks the padding (WONTFIX)
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"^7");
+			l = 16 - Q_PrintStrlen(cl->name);
+			if(l < 1){
+				l = 1;
+			}
+			j = 0;
+			do
+			{
+				Com_Printf(CON_CHANNEL_DONT_FILTER," ");
+				j++;
+			} while(j < l);
+		}
+		else
+		{
+			SV_SApiSteamIDToString(cl->steamid, ssti, sizeof(ssti));
+			SV_SApiSteamIDToString(cl->playerid, psti, sizeof(psti));
 
-    		do
-    		{
-    			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER," ");
-    			j++;
-    		} while(j < l);
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"%s", psti );
 
-    }else{
-      SV_SApiSteamIDToString(cl->steamid, ssti, sizeof(ssti));
-      SV_SApiSteamIDToString(cl->playerid, psti, sizeof(psti));
+			l = 20 - strlen(psti);
+			j = 0;
 
-      Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%s", psti );
+			do
+			{
+				Com_Printf(CON_CHANNEL_DONT_FILTER," ");
+				j++;
+			} while(j < l);
 
-      l = 20 - strlen(psti);
-      j = 0;
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"%s", ssti );
 
-      do
-      {
-        Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER," ");
-        j++;
-      } while(j < l);
+			l = 18 - strlen(ssti);
+			j = 0;
 
-      Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%s", ssti );
-
-      l = 18 - strlen(ssti);
-      j = 0;
-
-      do
-      {
-        Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER," ");
-        j++;
-      } while(j < l);
+			do
+			{
+				Com_Printf(CON_CHANNEL_DONT_FILTER," ");
+				j++;
+			} while(j < l);
 
 
-      Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%s", cl->name);
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"%s", cl->name);
 
-      // TTimo adding a ^7 to reset the color
-      // NOTE: colored names in status breaks the padding (WONTFIX)
-      Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"^7");
-      l = 33 - Q_PrintStrlen(cl->name);
-      j = 0;
+			// TTimo adding a ^7 to reset the color
+			// NOTE: colored names in status breaks the padding (WONTFIX)
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"^7");
 
-      do
-      {
-        Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER," ");
-        j++;
-      } while(j < l);
+			l = 33 - Q_PrintStrlen(cl->name);
+			j = 0;
 
-    }
+			do
+			{
+				Com_Printf(CON_CHANNEL_DONT_FILTER," ");
+				j++;
+			} 
+			while(j < l);
+		}
 
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%7i ", svs.time - cl->lastPacketTime );
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"%7i ", svs.time - cl->lastPacketTime );
 		/* Length must be: [0000:1111:2222:3333:4444:5555:6666:7777:8888]:65535 = 52 */
 		s = NET_AdrToString( &cl->netchan.remoteAddress );
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"%s", s);
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"%s", s);
 		l = 52 - strlen(s);
 		j = 0;
 
@@ -793,13 +805,15 @@ static void SV_Status_f( void ) {
 			j++;
 		} while(j < l);
 
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER," %5i", cl->netchan.qport);
+		Com_Printf(CON_CHANNEL_DONT_FILTER," %5i", cl->netchan.qport);
+		Com_Printf(CON_CHANNEL_DONT_FILTER," %5i", cl->rate);
 
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER," %5i", cl->rate);
-
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"\n");
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"\n");
 	}
-	Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"\n");
+
+	Com_Printf(CON_CHANNEL_DONT_FILTER,"\n");
+
+	CON_EnableDraw();
 }
 
 /*
@@ -816,6 +830,7 @@ static void Cmd_UnbanPlayer_f() {
 
     if ( Cmd_Argc() < 2) {
             Com_Printf(CON_CHANNEL_DONT_FILTER, "Usage: unban <id?>\n" );
+            return;
     }
 
     invokerSteamId = Cmd_GetInvokerSteamID();
@@ -834,6 +849,8 @@ static void Cmd_UnbanPlayer_f() {
     baninfo.playerid = 0;
     baninfo.expire = 0;
     baninfo.duration = 0;
+    baninfo.created = Com_GetRealtime();
+    baninfo.message[0] = 0;
 
     steamid = SV_Cmd_GetPlayerByHandle().steamid;
     if(steamid > 0)
@@ -862,29 +879,26 @@ static void Cmd_Undercover_f() {
         if(invokerclnum < 64 && invokerclnum >= 0)
         {
 		if ( Cmd_Argc() != 1 ) {
-			Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"Usage: undercover\n");
+			Com_Printf(CON_CHANNEL_DONT_FILTER,"Usage: undercover\n");
 			return;
 		}
 		client_t* cl = &svs.clients[invokerclnum];
-		gc = G_GetPlayerState(invokerclnum);
-		if(gc && gc->sess.sessionState == STATE_PLAYING)
+		gc = G_GetGClient(invokerclnum);
+		if(gc && gc->sess.sessionState == SESS_STATE_PLAYING)
 		{
 			Com_Printf(CON_CHANNEL_DONT_FILTER,"Error: You can not use the command \"undercover\" when you are alive\n");
 			return;
 		}
+
 		cl->undercover ^= 1;
-		if(cl->undercover)
-		{
-			Com_Printf(CON_CHANNEL_DONT_FILTER,"Undercover mode is now turned on\n");
-		}else{
-			Com_Printf(CON_CHANNEL_DONT_FILTER,"Undercover mode is now turned off\n");
-		}
+        Com_Printf(CON_CHANNEL_DONT_FILTER, "Undercover mode is now turned %s\n", cl->undercover ? "off" : "on");
+
 		Auth_StoreUndercoverStatus(cl);
 		return;
         }
 
 	if ( Cmd_Argc() != 3 ) {
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"Usage: undercover <slot> <0/1>\n");
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"Usage: undercover <slot> <0/1>\n");
 		return;
 	}
 
@@ -892,8 +906,8 @@ static void Cmd_Undercover_f() {
 	if(cl == NULL)
 		return;
 
-	gc = G_GetPlayerState(cl - svs.clients);
-	if(gc && gc->sess.sessionState == STATE_PLAYING)
+	gc = G_GetGClient(cl - svs.clients);
+	if(gc && gc->sess.sessionState == SESS_STATE_PLAYING)
 	{
 		Com_Printf(CON_CHANNEL_DONT_FILTER,"Error: You can not use the command \"undercover\" when you are alive\n");
 		return;
@@ -908,7 +922,7 @@ static void Cmd_Undercover_f() {
 	}
 	else
 	{
-		Com_Printf(CON_CHANNEL_DONT_FILTER,CON_CHANNEL_DONT_FILTER,"Usage: undercover <slot> <0/1>\n");
+		Com_Printf(CON_CHANNEL_DONT_FILTER,"Usage: undercover <slot> <0/1>\n");
 	}
 
 }
@@ -1022,6 +1036,7 @@ gothandle:
       Q_strncpyz(baninfo.adminname, Cmd_GetInvokerName(name, sizeof(name)), sizeof(baninfo.adminname));
       baninfo.adminsteamid = invokerSteamId;
   }
+  baninfo.created = Com_GetRealtime();
   baninfo.expire = (time_t)-1;
   baninfo.duration = (time_t)-1;
   Q_strncpyz(baninfo.message, banreason, sizeof(baninfo.message));
@@ -1192,6 +1207,7 @@ gothandle:
       Q_strncpyz(baninfo.adminname, Cmd_GetInvokerName(name, sizeof(name)), sizeof(baninfo.adminname));
       baninfo.adminsteamid = invokerSteamId;
     }
+    baninfo.created = Com_GetRealtime();
     baninfo.expire = expire;
     baninfo.duration = (time_t)duration;
     Q_strncpyz(baninfo.message, banreason, sizeof(baninfo.message));
@@ -1362,7 +1378,7 @@ Also called by SV_DropClient, SV_DirectConnect, and SV_SpawnServer
 ==================
 */
 void SV_Heartbeat_f( void ) {
-	svse.nextHeartbeatTime = 0;
+	svs.nextHeartbeatTime = 0;
 }
 
 
@@ -1594,58 +1610,6 @@ static void SV_Record_f( void ) {
   }
 }
 
-
-
-static void SV_ShowRules_f(){
-
-    unsigned int clnum;
-    client_t* cl;
-    int i;
-
-    if(Cmd_GetInvokerPower() > 20){
-
-	for(i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++)
-	{
-		if(cl->state == CS_ACTIVE){
-	            cl->msgType = 1;
-	            cl->currentAd = 0;
-		}
-	}
-
-    }else{
-        clnum = Cmd_GetInvokerClnum();
-        if(clnum < 64){
-            cl = &svs.clients[clnum];
-            cl->msgType = 1;
-            cl->currentAd = 0;
-        }
-    }
-}
-
-static void SV_AddRule_f(){
-
-    if ( Cmd_Argc() != 2) {
-        Com_Printf(CON_CHANNEL_DONT_FILTER, "Usage: addRuleMsg <\"text here in quotes\">\n" );
-        return;
-    }
-
-    G_AddRule( Cmd_Argv(1));
-}
-
-static void SV_AddAdvert_f(){
-
-    if ( Cmd_Argc() != 2) {
-        Com_Printf(CON_CHANNEL_DONT_FILTER, "Usage: addAdvertMsg <\"text here in quotes\">\n" );
-        return;
-    }
-    G_AddAdvert( Cmd_Argv(1));
-}
-
-static void SV_ClearAllMessages_f(){
-
-    G_ClearAllMessages();
-
-}
 
 
 /*
@@ -1938,9 +1902,10 @@ static void SV_SetPerk_f( void ){
 }
 
 
+
 void __cdecl SV_StringUsage_f()
 {
-  MT_DumpTree( );
+	MT_DumpTree( );
 }
 
 void __cdecl SV_ScriptUsage_f()
@@ -2347,20 +2312,30 @@ void SV_GetModules_f()
 	BuildModuleRequests(cl.cl);
 }
 
-void SV_AddOperatorCommands(){
 
-	static qboolean	initialized;
+void SV_AddOperatorCommands()
+{
+	//static qboolean	initialized; // Not used?
+	//initialized = qtrue;
 
-	if ( initialized ) {
-		return;
-	}
-	initialized = qtrue;
+	//Former safe commands
+	Cmd_AddPCommand ("systeminfo", SV_Systeminfo_f, 1);
+	Cmd_AddPCommand ("serverinfo", SV_Serverinfo_f, 1);
+	Cmd_AddPCommand ("map", SV_Map_f, 60);
+	Cmd_AddCommand ("map_rotate", SV_MapRotate_f);
+	Cmd_AddCommand ("writenvcfg", NV_WriteConfig);
+	Cmd_AddCommand ("status", SV_Status_f);
+	Cmd_AddCommand ("addCommand", Cmd_AddTranslatedCommand_f);
+	Cmd_AddCommand ("downloadmap", SV_DownloadMap_f);
+	Cmd_AddPCommand ("gametype", SV_ChangeGametype_f, 80);
+
+
+	//Other commands
 	Cmd_AddPCommand ("getmodules", SV_GetModules_f, 45);
 	Cmd_AddCommand ("killserver", SV_KillServer_f);
 	Cmd_AddCommand ("setPerk", SV_SetPerk_f);
 	Cmd_AddPCommand ("map_restart", SV_MapRestart_f, 50);
 	Cmd_AddCommand ("fast_restart", SV_FastRestart_f);
-	Cmd_AddPCommand ("rules", SV_ShowRules_f, 1);
 	Cmd_AddCommand ("heartbeat", SV_Heartbeat_f);
 	Cmd_AddPCommand ("kick", Cmd_KickPlayer_f, 35);
 	Cmd_AddCommand ("clientkick", Cmd_KickPlayer_f);
@@ -2393,90 +2368,8 @@ void SV_AddOperatorCommands(){
 		Cmd_AddCommand ("devmap", SV_Map_f);
 
 	}
-
 }
 
-void SV_AddSafeCommands(){
-
-	static qboolean	initialized;
-
-	if ( initialized ) {
-		return;
-	}
-	initialized = qtrue;
-
-	Cmd_AddPCommand ("systeminfo", SV_Systeminfo_f, 1);
-	Cmd_AddPCommand ("serverinfo", SV_Serverinfo_f, 1);
-	Cmd_AddPCommand ("map", SV_Map_f, 60);
-	Cmd_AddCommand ("map_rotate", SV_MapRotate_f);
-	Cmd_AddCommand ("addAdvertMsg", SV_AddAdvert_f);
-	Cmd_AddCommand ("addRuleMsg", SV_AddRule_f);
-	Cmd_AddCommand ("clearAllMsg", SV_ClearAllMessages_f);
-	Cmd_AddCommand ("writenvcfg", NV_WriteConfig);
-	Cmd_AddCommand ("status", SV_Status_f);
-	Cmd_AddCommand ("addCommand", Cmd_AddTranslatedCommand_f);
-	Cmd_AddCommand ("downloadmap", SV_DownloadMap_f);
-	Cmd_AddPCommand ("gametype", SV_ChangeGametype_f, 80);
-
-}
-
-
-
-
-void SV_Cmd_Init( void ) {
-
-	*(int*)0x8879a40 = -1;
-	*(int*)0x887eb40 = 0;
-	*(int*)0x887eb44 = 0;
-
-}
-
-
-/*
-============
-SV_Cmd_Argc	Returns count of commandline arguments
-============
-*/
-int	SV_Cmd_Argc( void ) {
-
-	int	cmd_argc;
-
-	__asm__ (
-	"mov	0x8879a40,%%eax			\n\t"
-	"mov	0x8879a84(,%%eax,4), %%eax	\n\t"
-	:"=a" (cmd_argc));
-
-	return cmd_argc;
-}
-
-
-/*
-============
-SV_Cmd_Argv	Returns commandline argument by number
-============
-*/
-
-char	*SV_Cmd_Argv( int arg ) {
-
-	char* cmd_argv;
-
-	__asm__ (
-	"mov	0x8879a40,%%eax			\n\t"
-	"mov    $0x822be98,%%edx		\n\t"
-	"cmpl   %%ecx,0x8879a84(,%%eax,4)	\n\t"
-	"jle	1f				\n\t"
-	"mov    0x8879aa4(,%%eax,4),%%eax	\n\t"
-	"lea	(%%eax,%%ecx,4),%%edx		\n\t"
-	"mov    0x4(%%eax),%%edx		\n\t"
-	"lea	(%%eax,%%ecx,4),%%edx		\n\t"
-	"mov	(%%edx),%%edx			\n\t"
-	"1:					\n\t"
-	"					\n\t"
-	:"=d" (cmd_argv)
-	:"c" (arg)
-	:"eax"					);
-	return (cmd_argv);
-}
 
 /*
 ============

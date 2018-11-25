@@ -26,14 +26,21 @@
 #define __SYS_MAIN_H__
 
 #include "q_shared.h"
+
+
 #include <setjmp.h>
 #include <inttypes.h>
 #include <stdbool.h>
 
-#ifndef __WIN32
-void *__cdecl VirtualAlloc(void *address, int dwSize, int flAllocationType, int flProtect);
-bool __cdecl VirtualFree(void* lpAddress, int dwSize, uint32_t dwFreeType);
+#ifdef _WIN32
+#include "win32/sys_win32.h"
+#else
 #include "unix/sys_unix.h"
+#endif
+
+
+#ifdef __cplusplus
+extern "C"{
 #endif
 
 unsigned int Sys_Milliseconds( void );
@@ -64,9 +71,6 @@ void Sys_DoStartProcess( char *cmdline );
 const char *Sys_Dirname(const char *path);
 char *Sys_Cwd( void );
 void Sys_InitCrashDumps();
-qboolean Sys_MemoryProtectWrite(void* startoffset, int len);
-qboolean Sys_MemoryProtectExec(void* startoffset, int len);
-qboolean Sys_MemoryProtectReadonly(void* startoffset, int len);
 const char *Sys_DefaultHomePath(void);
 const char *Sys_TempPath( void );
 void __cdecl Sys_Init(void);
@@ -88,7 +92,7 @@ const char *Sys_Basename( char *path );
 qboolean Sys_Mkdir( const char *path );
 qboolean Sys_SetPermissionsExec(const char* ospath);
 void Sys_WaitForErrorConfirmation(const char* error);
-void  __attribute__ ((noreturn)) Sys_ExitForOS( int exitCode );
+void  __noreturn Sys_ExitForOS( int exitCode );
 
 
 void Sys_SleepSec(int seconds);
@@ -105,6 +109,8 @@ void CON_Shutdown( void );
 void CON_Init(void);
 char *CON_Input( void );
 void CON_Print( const char *msg );
+void CON_DisableDraw();
+void CON_EnableDraw();
 int Sys_Chmod(const char* filename, int mode);
 void Sys_Restart(const char* reason);
 
@@ -112,6 +118,13 @@ void Sys_BeginLoadThreadPriorities();
 void Sys_EndLoadThreadPriorities();
 void Sys_BeginShutdownWatchdog();
 
+signed int __cdecl Sys_ResetEvent(HANDLE handle);
+signed int __cdecl Sys_SetEvent(HANDLE handle);
+HANDLE Sys_CreateEvent(qboolean bManualReset, qboolean bInitialState, const char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

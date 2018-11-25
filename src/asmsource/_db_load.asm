@@ -70,15 +70,16 @@
 	extern Load_PicmipWater
 	extern Load_MaterialTechniqueSetAsset
 	extern Load_CreateMaterialVertexShader
+	extern Load_WeaponDefSounds
+	extern Load_WeaponDef
+	extern Load_XModelBoneNames
 
 ;Exports of db_load:
-	global Load_XAsset
 	global Load_XModel
 	global Mark_XAsset
 	global Load_GfxCell
 	global Load_MapEnts
 	global Load_RawFile
-	global Load_XString
 	global Load_water_t
 	global Load_ComWorld
 	global Load_GfxWorld
@@ -91,7 +92,6 @@
 	global Mark_GfxWorld
 	global Load_FxElemDef
 	global Load_GfxPortal
-	global Load_WeaponDef
 	global Load_XModelPtr
 	global Load_clipMap_t
 	global Load_itemDef_t
@@ -104,7 +104,6 @@
 	global Load_MapEntsPtr
 	global Load_RawFilePtr
 	global Load_XAnimParts
-	global Load_XStringPtr
 	global Load_multiDef_t
 	global AllocLoad_XAsset
 	global Load_ComWorldPtr
@@ -148,7 +147,6 @@
 	global Load_FxElemDefVisuals
 	global Load_FxImpactTablePtr
 	global Load_LocalizeEntryPtr
-	global Load_ScriptStringList
 	global Load_snd_alias_list_t
 	global Mark_FxElemDefVisuals
 	global Load_FxEffectDefHandle
@@ -416,26 +414,6 @@
 SECTION .text
 
 
-;Load_XAsset(unsigned char)
-Load_XAsset:
-	push ebp
-	mov ebp, esp
-	sub esp, 0x18
-	mov dword [esp+0x8], 0x8
-	mov eax, [varXAsset]
-	mov [esp+0x4], eax
-	movzx eax, byte [ebp+0x8]
-	mov [esp], eax
-	call Load_Stream
-	mov eax, [varXAsset]
-	add eax, 0x4
-	mov [varXAssetHeader], eax
-	mov dword [ebp+0x8], 0x0
-	leave
-	jmp Load_XAssetHeader
-	nop
-
-
 ;Load_XModel(unsigned char)
 Load_XModel:
 	push ebp
@@ -467,17 +445,11 @@ Load_XModel:
 	mov [esp], ebx
 	call DB_ConvertOffsetToPointer
 Load_XModel_10:
-	mov ebx, [varXModel]
-	mov eax, [ebx+0x8]
-	test eax, eax
-	jz Load_XModel_30
-	add eax, 0x1
-	jz Load_XModel_40
-	lea eax, [ebx+0x8]
-	mov [esp], eax
-	call DB_ConvertOffsetToPointer
+Load_XModel_BoneNames:
+	call Load_XModelBoneNames
 	mov ebx, [varXModel]
 Load_XModel_30:
+Load_XModel_parentList:
 	mov eax, [ebx+0xc]
 	test eax, eax
 	jz Load_XModel_50
@@ -488,6 +460,7 @@ Load_XModel_30:
 	call DB_ConvertOffsetToPointer
 	mov ebx, [varXModel]
 Load_XModel_50:
+Load_XModel_quats:
 	mov eax, [ebx+0x10]
 	test eax, eax
 	jz Load_XModel_70
@@ -498,6 +471,7 @@ Load_XModel_50:
 	call DB_ConvertOffsetToPointer
 	mov ebx, [varXModel]
 Load_XModel_70:
+Load_XModel_trans:
 	mov eax, [ebx+0x14]
 	test eax, eax
 	jz Load_XModel_90
@@ -508,6 +482,7 @@ Load_XModel_70:
 	call DB_ConvertOffsetToPointer
 	mov ebx, [varXModel]
 Load_XModel_90:
+Load_XModel_partClassification:
 	mov eax, [ebx+0x18]
 	test eax, eax
 	jz Load_XModel_110
@@ -518,6 +493,7 @@ Load_XModel_90:
 	call DB_ConvertOffsetToPointer
 	mov ebx, [varXModel]
 Load_XModel_110:
+Load_XModel_baseMat:
 	mov eax, [ebx+0x1c]
 	test eax, eax
 	jz Load_XModel_130
@@ -528,6 +504,7 @@ Load_XModel_110:
 	call DB_ConvertOffsetToPointer
 	mov ebx, [varXModel]
 Load_XModel_130:
+Load_XModel_surfs:
 	mov ecx, [ebx+0x20]
 	test ecx, ecx
 	jz Load_XModel_150
@@ -552,6 +529,7 @@ Load_XModel_130:
 Load_XModel_280:
 	mov ebx, [varXModel]
 Load_XModel_150:
+Load_XModel_materialHandles:
 	mov edx, [ebx+0x24]
 	test edx, edx
 	jz Load_XModel_170
@@ -573,6 +551,7 @@ Load_XModel_150:
 Load_XModel_300:
 	mov ebx, [varXModel]
 Load_XModel_170:
+Load_XModel_collSurfs:
 	mov eax, [ebx+0x98]
 	test eax, eax
 	jz Load_XModel_190
@@ -596,6 +575,7 @@ Load_XModel_170:
 Load_XModel_260:
 	mov ebx, [varXModel]
 Load_XModel_190:
+Load_XModel_boneInfo:
 	mov eax, [ebx+0xa4]
 	test eax, eax
 	jz Load_XModel_210
@@ -614,6 +594,7 @@ Load_XModel_190:
 	call Load_Stream
 	mov ebx, [varXModel]
 Load_XModel_210:
+Load_XModel_physPreset:
 	lea eax, [ebx+0xd4]
 	mov [varPhysPresetPtr], eax
 	mov dword [esp], 0x0
@@ -628,6 +609,7 @@ Load_XModel_210:
 	mov [esp], eax
 	call DB_ConvertOffsetToPointer
 Load_XModel_220:
+Load_XModel_exit:
 	add esp, 0x2c
 	pop ebx
 	pop esi
@@ -775,25 +757,6 @@ Load_XModel_140:
 	call Load_Stream
 	mov ebx, [varXModel]
 	jmp Load_XModel_130
-Load_XModel_40:
-	mov dword [esp], 0x1
-	call DB_AllocStreamPos
-	mov [ebx+0x8], eax
-	mov eax, [varXModel]
-	mov edx, [eax+0x8]
-	mov [varScriptString], edx
-	movzx edi, byte [eax+0x4]
-	lea eax, [edi+edi]
-	mov [esp+0x8], eax
-	mov [esp+0x4], edx
-	mov dword [esp], 0x1
-	call Load_Stream
-	mov ebx, [varScriptString]
-	test edi, edi
-	jg Load_XModel_310
-Load_XModel_330:
-	mov ebx, [varXModel]
-	jmp Load_XModel_30
 Load_XModel_60:
 	mov dword [esp], 0x0
 	call DB_AllocStreamPos
@@ -810,22 +773,6 @@ Load_XModel_60:
 	call Load_Stream
 	mov ebx, [varXModel]
 	jmp Load_XModel_50
-Load_XModel_310:
-	xor esi, esi
-Load_XModel_320:
-	mov [varScriptString], ebx
-	mov dword [esp+0x8], 0x2
-	mov [esp+0x4], ebx
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varScriptString]
-	mov [esp], eax
-	call Load_ScriptStringCustom
-	add ebx, 0x2
-	add esi, 0x1
-	cmp edi, esi
-	jnz Load_XModel_320
-	jmp Load_XModel_330
 
 
 ;Mark_XAsset()
@@ -1111,48 +1058,6 @@ Load_RawFile_20:
 	mov [esp], edx
 	call Load_XStringCustom
 	jmp Load_RawFile_10
-
-
-;Load_XString(unsigned char)
-Load_XString:
-	push ebp
-	mov ebp, esp
-	push ebx
-	sub esp, 0x14
-	mov dword [esp+0x8], 0x4
-	mov eax, [varXString]
-	mov [esp+0x4], eax
-	movzx eax, byte [ebp+0x8]
-	mov [esp], eax
-	call Load_Stream
-	mov ebx, [varXString]
-	mov eax, [ebx]
-	test eax, eax
-	jz Load_XString_10
-	add eax, 0x1
-	jz Load_XString_20
-	mov [ebp+0x8], ebx
-	add esp, 0x14
-	pop ebx
-	pop ebp
-	jmp DB_ConvertOffsetToPointer
-Load_XString_20:
-	mov dword [esp], 0x0
-	call DB_AllocStreamPos
-	mov [ebx], eax
-	mov edx, [varXString]
-	mov eax, [edx]
-	mov [varConstChar], eax
-	mov [ebp+0x8], edx
-	add esp, 0x14
-	pop ebx
-	pop ebp
-	jmp Load_XStringCustom
-Load_XString_10:
-	add esp, 0x14
-	pop ebx
-	pop ebp
-	ret
 
 
 ;Load_water_t(unsigned char)
@@ -3227,950 +3132,6 @@ Load_GfxPortal_20:
 	jmp Load_GfxPortal_10
 	nop
 
-
-;Load_WeaponDef(unsigned char)
-Load_WeaponDef:
-	push ebp
-	mov ebp, esp
-	push esi
-	push ebx
-	sub esp, 0x10
-	mov dword [esp+0x8], 0x878
-	mov eax, [varWeaponDef]
-	mov [esp+0x4], eax
-	movzx eax, byte [ebp+0x8]
-	mov [esp], eax
-	call Load_Stream
-	mov dword [esp], 0x4
-	call DB_PushStreamPos
-	mov eax, [varWeaponDef]
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov eax, [varWeaponDef]
-	add eax, 0x4
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov eax, [varWeaponDef]
-	add eax, 0x8
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov eax, [varWeaponDef]
-	add eax, 0xc
-	mov [varXModelPtr], eax
-	mov dword [esp+0x8], 0x40
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov ebx, [varXModelPtr]
-	mov esi, 0x10
-Load_WeaponDef_10:
-	mov [varXModelPtr], ebx
-	mov dword [esp], 0x0
-	call Load_XModelPtr
-	add ebx, 0x4
-	sub esi, 0x1
-	jnz Load_WeaponDef_10
-	mov eax, [varWeaponDef]
-	add eax, 0x4c
-	mov [varXModelPtr], eax
-	mov dword [esp], 0x0
-	call Load_XModelPtr
-	mov eax, [varWeaponDef]
-	add eax, 0x50
-	mov [varXString], eax
-	mov dword [esp+0x8], 0x84
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov ebx, [varXString]
-	mov esi, 0x21
-Load_WeaponDef_20:
-	mov [varXString], ebx
-	mov dword [esp], 0x0
-	call Load_XString
-	add ebx, 0x4
-	sub esi, 0x1
-	jnz Load_WeaponDef_20
-	mov eax, [varWeaponDef]
-	add eax, 0xd4
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov eax, [varWeaponDef]
-	add eax, 0xd8
-	mov [varScriptString], eax
-	mov dword [esp+0x8], 0x10
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov ebx, [varScriptString]
-	mov esi, 0x8
-Load_WeaponDef_30:
-	mov [varScriptString], ebx
-	mov dword [esp+0x8], 0x2
-	mov [esp+0x4], ebx
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varScriptString]
-	mov [esp], eax
-	call Load_ScriptStringCustom
-	add ebx, 0x2
-	sub esi, 0x1
-	jnz Load_WeaponDef_30
-	mov eax, [varWeaponDef]
-	add eax, 0xe8
-	mov [varScriptString], eax
-	mov dword [esp+0x8], 0x20
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov ebx, [varScriptString]
-	mov esi, 0x10
-Load_WeaponDef_40:
-	mov [varScriptString], ebx
-	mov dword [esp+0x8], 0x2
-	mov [esp+0x4], ebx
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varScriptString]
-	mov [esp], eax
-	call Load_ScriptStringCustom
-	add ebx, 0x2
-	sub esi, 0x1
-	jnz Load_WeaponDef_40
-	mov eax, [varWeaponDef]
-	add eax, 0x108
-	mov [varScriptString], eax
-	mov dword [esp+0x8], 0x20
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov ebx, [varScriptString]
-	mov esi, 0x10
-Load_WeaponDef_50:
-	mov [varScriptString], ebx
-	mov dword [esp+0x8], 0x2
-	mov [esp+0x4], ebx
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varScriptString]
-	mov [esp], eax
-	call Load_ScriptStringCustom
-	add ebx, 0x2
-	sub esi, 0x1
-	jnz Load_WeaponDef_50
-	mov eax, [varWeaponDef]
-	add eax, 0x14c
-	mov [varFxEffectDefHandle], eax
-	mov dword [esp], 0x0
-	call Load_FxEffectDefHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x150
-	mov [varFxEffectDefHandle], eax
-	mov dword [esp], 0x0
-	call Load_FxEffectDefHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x154
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x158
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x15c
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x160
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x164
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x168
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x16c
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x170
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x174
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x178
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x17c
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x180
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x184
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x188
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x18c
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x190
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x194
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x198
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x19c
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1a0
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1a4
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1a8
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1ac
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1b0
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1b4
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1b8
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1bc
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1c0
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1c4
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1c8
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1cc
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1d0
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1d4
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1d8
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1dc
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1e0
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1e4
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1e8
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1ec
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1f0
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1f4
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1f8
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x1fc
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x200
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x204
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov ebx, [varWeaponDef]
-	mov eax, [ebx+0x208]
-	test eax, eax
-	jz Load_WeaponDef_60
-	add eax, 0x1
-	jz Load_WeaponDef_70
-	lea eax, [ebx+0x208]
-	mov [esp], eax
-	call DB_ConvertOffsetToPointer
-Load_WeaponDef_180:
-	mov ebx, [varWeaponDef]
-Load_WeaponDef_60:
-	lea eax, [ebx+0x20c]
-	mov [varFxEffectDefHandle], eax
-	mov dword [esp], 0x0
-	call Load_FxEffectDefHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x210
-	mov [varFxEffectDefHandle], eax
-	mov dword [esp], 0x0
-	call Load_FxEffectDefHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x214
-	mov [varFxEffectDefHandle], eax
-	mov dword [esp], 0x0
-	call Load_FxEffectDefHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x218
-	mov [varFxEffectDefHandle], eax
-	mov dword [esp], 0x0
-	call Load_FxEffectDefHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x21c
-	mov [varMaterialHandle], eax
-	mov dword [esp], 0x0
-	call Load_MaterialHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x220
-	mov [varMaterialHandle], eax
-	mov dword [esp], 0x0
-	call Load_MaterialHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x2bc
-	mov [varXModelPtr], eax
-	mov dword [esp+0x8], 0x40
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov ebx, [varXModelPtr]
-	mov esi, 0x10
-Load_WeaponDef_80:
-	mov [varXModelPtr], ebx
-	mov dword [esp], 0x0
-	call Load_XModelPtr
-	add ebx, 0x4
-	sub esi, 0x1
-	jnz Load_WeaponDef_80
-	mov eax, [varWeaponDef]
-	add eax, 0x2fc
-	mov [varXModelPtr], eax
-	mov dword [esp], 0x0
-	call Load_XModelPtr
-	mov eax, [varWeaponDef]
-	add eax, 0x300
-	mov [varXModelPtr], eax
-	mov dword [esp], 0x0
-	call Load_XModelPtr
-	mov eax, [varWeaponDef]
-	add eax, 0x304
-	mov [varXModelPtr], eax
-	mov dword [esp], 0x0
-	call Load_XModelPtr
-	mov eax, [varWeaponDef]
-	add eax, 0x308
-	mov [varXModelPtr], eax
-	mov dword [esp], 0x0
-	call Load_XModelPtr
-	mov eax, [varWeaponDef]
-	add eax, 0x30c
-	mov [varMaterialHandle], eax
-	mov dword [esp], 0x0
-	call Load_MaterialHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x314
-	mov [varMaterialHandle], eax
-	mov dword [esp], 0x0
-	call Load_MaterialHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x324
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov eax, [varWeaponDef]
-	add eax, 0x32c
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov eax, [varWeaponDef]
-	add eax, 0x340
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov eax, [varWeaponDef]
-	add eax, 0x430
-	mov [varMaterialHandle], eax
-	mov dword [esp], 0x0
-	call Load_MaterialHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x434
-	mov [varMaterialHandle], eax
-	mov dword [esp], 0x0
-	call Load_MaterialHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x518
-	mov [varMaterialHandle], eax
-	mov dword [esp], 0x0
-	call Load_MaterialHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x524
-	mov [varMaterialHandle], eax
-	mov dword [esp], 0x0
-	call Load_MaterialHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x53c
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov eax, [varWeaponDef]
-	add eax, 0x584
-	mov [varXModelPtr], eax
-	mov dword [esp], 0x0
-	call Load_XModelPtr
-	mov eax, [varWeaponDef]
-	add eax, 0x58c
-	mov [varFxEffectDefHandle], eax
-	mov dword [esp], 0x0
-	call Load_FxEffectDefHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x594
-	mov [varFxEffectDefHandle], eax
-	mov dword [esp], 0x0
-	call Load_FxEffectDefHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x598
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x59c
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x6a8
-	mov [varFxEffectDefHandle], eax
-	mov dword [esp], 0x0
-	call Load_FxEffectDefHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x6c4
-	mov [varFxEffectDefHandle], eax
-	mov dword [esp], 0x0
-	call Load_FxEffectDefHandle
-	mov eax, [varWeaponDef]
-	add eax, 0x6c8
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	mov eax, [varWeaponDef]
-	add eax, 0x76c
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov ebx, [varWeaponDef]
-	mov eax, [ebx+0x774]
-	test eax, eax
-	jz Load_WeaponDef_90
-	add eax, 0x1
-	jz Load_WeaponDef_100
-	lea eax, [ebx+0x774]
-	mov [esp], eax
-	call DB_ConvertOffsetToPointer
-	mov ebx, [varWeaponDef]
-Load_WeaponDef_90:
-	mov eax, [ebx+0x77c]
-	test eax, eax
-	jz Load_WeaponDef_110
-	add eax, 0x1
-	jz Load_WeaponDef_120
-	lea eax, [ebx+0x77c]
-	mov [esp], eax
-	call DB_ConvertOffsetToPointer
-	mov ebx, [varWeaponDef]
-Load_WeaponDef_110:
-	lea eax, [ebx+0x770]
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov ebx, [varWeaponDef]
-	mov eax, [ebx+0x778]
-	test eax, eax
-	jz Load_WeaponDef_130
-	add eax, 0x1
-	jz Load_WeaponDef_140
-	lea eax, [ebx+0x778]
-	mov [esp], eax
-	call DB_ConvertOffsetToPointer
-	mov ebx, [varWeaponDef]
-Load_WeaponDef_130:
-	mov eax, [ebx+0x780]
-	test eax, eax
-	jz Load_WeaponDef_150
-	add eax, 0x1
-	jz Load_WeaponDef_160
-	lea eax, [ebx+0x780]
-	mov [esp], eax
-	call DB_ConvertOffsetToPointer
-	mov ebx, [varWeaponDef]
-Load_WeaponDef_150:
-	lea eax, [ebx+0x7dc]
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov eax, [varWeaponDef]
-	add eax, 0x7e0
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov eax, [varWeaponDef]
-	add eax, 0x7f4
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov eax, [varWeaponDef]
-	add eax, 0x868
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	mov eax, [varWeaponDef]
-	add eax, 0x86c
-	mov [varXString], eax
-	mov dword [esp], 0x0
-	call Load_XString
-	add esp, 0x10
-	pop ebx
-	pop esi
-	pop ebp
-	jmp DB_PopStreamPos
-Load_WeaponDef_160:
-	mov dword [esp], 0x3
-	call DB_AllocStreamPos
-	mov [ebx+0x780], eax
-	mov eax, [varWeaponDef]
-	mov edx, [eax+0x780]
-	mov [varvec2_t], edx
-	mov eax, [eax+0x788]
-	shl eax, 0x3
-	mov [esp+0x8], eax
-	mov [esp+0x4], edx
-	mov dword [esp], 0x1
-	call Load_Stream
-	mov ebx, [varWeaponDef]
-	jmp Load_WeaponDef_150
-Load_WeaponDef_70:
-	mov dword [esp], 0x3
-	call DB_AllocStreamPos
-	mov [ebx+0x208], eax
-	mov eax, [varWeaponDef]
-	mov eax, [eax+0x208]
-	mov [varsnd_alias_list_name], eax
-	mov dword [esp+0x8], 0x74
-	mov [esp+0x4], eax
-	mov dword [esp], 0x1
-	call Load_Stream
-	mov ebx, [varsnd_alias_list_name]
-	mov esi, 0x1d
-Load_WeaponDef_170:
-	mov [varsnd_alias_list_name], ebx
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], ebx
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov eax, [varsnd_alias_list_name]
-	mov [esp], eax
-	call Load_SndAliasCustom
-	add ebx, 0x4
-	sub esi, 0x1
-	jnz Load_WeaponDef_170
-	jmp Load_WeaponDef_180
-Load_WeaponDef_100:
-	mov dword [esp], 0x3
-	call DB_AllocStreamPos
-	mov [ebx+0x774], eax
-	mov eax, [varWeaponDef]
-	mov edx, [eax+0x774]
-	mov [varvec2_t], edx
-	mov eax, [eax+0x784]
-	shl eax, 0x3
-	mov [esp+0x8], eax
-	mov [esp+0x4], edx
-	mov dword [esp], 0x1
-	call Load_Stream
-	mov ebx, [varWeaponDef]
-	jmp Load_WeaponDef_90
-Load_WeaponDef_120:
-	mov dword [esp], 0x3
-	call DB_AllocStreamPos
-	mov [ebx+0x77c], eax
-	mov eax, [varWeaponDef]
-	mov edx, [eax+0x77c]
-	mov [varvec2_t], edx
-	mov eax, [eax+0x784]
-	shl eax, 0x3
-	mov [esp+0x8], eax
-	mov [esp+0x4], edx
-	mov dword [esp], 0x1
-	call Load_Stream
-	mov ebx, [varWeaponDef]
-	jmp Load_WeaponDef_110
-Load_WeaponDef_140:
-	mov dword [esp], 0x3
-	call DB_AllocStreamPos
-	mov [ebx+0x778], eax
-	mov eax, [varWeaponDef]
-	mov edx, [eax+0x778]
-	mov [varvec2_t], edx
-	mov eax, [eax+0x788]
-	shl eax, 0x3
-	mov [esp+0x8], eax
-	mov [esp+0x4], edx
-	mov dword [esp], 0x1
-	call Load_Stream
-	mov ebx, [varWeaponDef]
-	jmp Load_WeaponDef_130
-	nop
 
 
 ;Load_XModelPtr(unsigned char)
@@ -8678,66 +7639,6 @@ Load_XAnimParts_20:
 	mov [esp], edx
 	call Load_XStringCustom
 	jmp Load_XAnimParts_10
-	nop
-
-
-;Load_XStringPtr(unsigned char)
-Load_XStringPtr:
-	push ebp
-	mov ebp, esp
-	push ebx
-	sub esp, 0x14
-	mov dword [esp+0x8], 0x4
-	mov eax, [varXStringPtr]
-	mov [esp+0x4], eax
-	movzx eax, byte [ebp+0x8]
-	mov [esp], eax
-	call Load_Stream
-	mov ebx, [varXStringPtr]
-	mov eax, [ebx]
-	test eax, eax
-	jz Load_XStringPtr_10
-	add eax, 0x1
-	jz Load_XStringPtr_20
-Load_XStringPtr_30:
-	mov [ebp+0x8], ebx
-	add esp, 0x14
-	pop ebx
-	pop ebp
-	jmp DB_ConvertOffsetToPointer
-Load_XStringPtr_20:
-	mov dword [esp], 0x3
-	call DB_AllocStreamPos
-	mov [ebx], eax
-	mov eax, [varXStringPtr]
-	mov eax, [eax]
-	mov [varXString], eax
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], eax
-	mov dword [esp], 0x1
-	call Load_Stream
-	mov ebx, [varXString]
-	mov eax, [ebx]
-	test eax, eax
-	jz Load_XStringPtr_10
-	add eax, 0x1
-	jnz Load_XStringPtr_30
-	mov dword [esp], 0x0
-	call DB_AllocStreamPos
-	mov [ebx], eax
-	mov edx, [varXString]
-	mov eax, [edx]
-	mov [varConstChar], eax
-	mov [ebp+0x8], edx
-	add esp, 0x14
-	pop ebx
-	pop ebp
-	jmp Load_XStringCustom
-Load_XStringPtr_10:
-	add esp, 0x14
-	pop ebx
-	pop ebp
-	ret
 	nop
 
 
@@ -13437,82 +12338,6 @@ Load_LocalizeEntryPtr_30:
 	jmp Load_LocalizeEntryPtr_80
 
 
-;Load_ScriptStringList(unsigned char)
-Load_ScriptStringList:
-	push ebp
-	mov ebp, esp
-	push edi
-	push esi
-	push ebx
-	sub esp, 0x2c
-	mov dword [esp+0x8], 0x8
-	mov eax, [varScriptStringList]
-	mov [esp+0x4], eax
-	movzx eax, byte [ebp+0x8]
-	mov [esp], eax
-	call Load_Stream
-	mov dword [esp], 0x4
-	call DB_PushStreamPos
-	mov ebx, [varScriptStringList]
-	mov edx, [ebx+0x4]
-	test edx, edx
-	jz Load_ScriptStringList_10
-	mov dword [esp], 0x3
-	call DB_AllocStreamPos
-	mov [ebx+0x4], eax
-	mov eax, [varScriptStringList]
-	mov edx, [eax+0x4]
-	mov [varTempString], edx
-	mov edi, [eax]
-	lea eax, [edi*4]
-	mov [esp+0x8], eax
-	mov [esp+0x4], edx
-	mov dword [esp], 0x1
-	call Load_Stream
-	mov esi, [varTempString]
-	test edi, edi
-	jg Load_ScriptStringList_20
-Load_ScriptStringList_10:
-	add esp, 0x2c
-	pop ebx
-	pop esi
-	pop edi
-	pop ebp
-	jmp DB_PopStreamPos
-Load_ScriptStringList_20:
-	mov dword [ebp-0x1c], 0x0
-	jmp Load_ScriptStringList_30
-Load_ScriptStringList_50:
-	mov [esp], ebx
-	call DB_ConvertOffsetToPointer
-Load_ScriptStringList_40:
-	add esi, 0x4
-	add dword [ebp-0x1c], 0x1
-	cmp edi, [ebp-0x1c]
-	jz Load_ScriptStringList_10
-Load_ScriptStringList_30:
-	mov [varTempString], esi
-	mov dword [esp+0x8], 0x4
-	mov [esp+0x4], esi
-	mov dword [esp], 0x0
-	call Load_Stream
-	mov ebx, [varTempString]
-	mov eax, [ebx]
-	test eax, eax
-	jz Load_ScriptStringList_40
-	add eax, 0x1
-	jnz Load_ScriptStringList_50
-	mov dword [esp], 0x0
-	call DB_AllocStreamPos
-	mov [ebx], eax
-	mov edx, [varTempString]
-	mov eax, [edx]
-	mov [varConstChar], eax
-	mov [esp], edx
-	call Load_TempStringCustom
-	jmp Load_ScriptStringList_40
-
-
 ;Load_snd_alias_list_t(unsigned char)
 Load_snd_alias_list_t:
 	push ebp
@@ -15779,7 +14604,6 @@ Load_Font_20:
 
 ;Zero initialized global or static variables of db_load:
 SECTION .bss
-varScriptStringList: resb 0x4
 varXAsset: resb 0x8
 varXAssetList: resb 0x4
 varBrushWrapper: resb 0x10
@@ -15915,7 +14739,6 @@ varStreamFileNameRaw: resb 0xc
 varStreamedSound: resb 0x4
 varStringTable: resb 0x4
 varStringTablePtr: resb 0x4
-varTempString: resb 0x4
 varUShortVec: resb 0x4
 varUnsignedShort: resb 0x4
 varWeaponDef: resb 0x54

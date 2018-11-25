@@ -48,11 +48,19 @@
 #endif
 
 
+#define DEDICATEDONLY
+
+
 #include "game/def.h"
 
 #ifndef __stdcall
 #define __stdcall __attribute__((stdcall))
 #endif
+
+#ifndef __noreturn
+#define __noreturn __attribute__((noreturn))
+#endif
+
 
 #ifndef __cdecl
 #define __cdecl __attribute__((cdecl))
@@ -66,11 +74,18 @@
 #define __optimize2 __attribute__ ((optimize("-O2")))
 #define __optimize3 __attribute__ ((optimize("-O3"))) __attribute__ ((noinline))
 
+
 #else
 
 #define __optimize2
 #define __optimize3
 
+#endif
+
+#ifdef _MSC_VER
+#define __align(X) __declspec(align(X))
+#else
+#define __align(X) __attribute__((aligned (X)))
 #endif
 
 #define REGPARM(X)   __attribute__ ((regparm(X)))
@@ -126,9 +141,6 @@ typedef enum {qfalse, qtrue}	qboolean;
 #define	MAX_STRING_TOKENS	1024	// max tokens resulting from Cmd_TokenizeString
 #define	MAX_STRING_CHARS	1024
 
-#ifndef Q_vsnprintf
-int Q_vsnprintf(char *s0, size_t size, const char *fmt, va_list args);
-#endif
 
 #define Q_COLOR_ESCAPE	'^'
 #define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE )
@@ -175,6 +187,11 @@ int Q_vsnprintf(char *s0, size_t size, const char *fmt, va_list args);
 extern "C"{
 #endif
 
+#ifndef Q_vsnprintf
+int Q_vsnprintf(char *s0, size_t size, const char *fmt, va_list args);
+#endif
+
+
 void Com_Memset(void*, byte, int);
 //#define Com_Memset memset
 void Com_Memcpy(void*, const void*, int);
@@ -185,6 +202,8 @@ void Com_Memcpy(void*, const void*, int);
 #define NET_WANT_WRITE -0x7001
 #define NET_CONNRESET -0x7002
 #define NET_ERROR -0x7003
+
+#define ARRAY_COUNT(array) (sizeof((array))/sizeof((array)[0]))
 
 short   ShortSwap (short l);
 short	ShortNoSwap (short l);
@@ -239,11 +258,13 @@ void Com_TruncateLongString( char *buffer, const char *s );
 
 qboolean Info_Validate( const char *s );
 char *Info_ValueForKey( const char *s, const char *key );
-int BigInfo_DecodedValueForKey( const char *s, const char *key, char* outbuf, int outlen );
 void Info_SetValueForKey( char *s, const char *key, const char *value );
-void BigInfo_SetValueForKey( char *s, const char *key, const char *value );
-void BigInfo_SetEncodedValueForKey( char *s, const char *key, const char *value, int len );
 void Info_Print( const char *s );
+void Info_SetEncodedValueForKey( char *s, const char *key, const char *value, int len );
+int Info_DecodedValueForKey( const char *s, const char *key, char *out, int outbuflen);
+
+
+qboolean __cdecl I_iscsym(int c);
 
 int SV_Cmd_Argc( void );
 int	Cmd_Argc( void );
@@ -257,7 +278,7 @@ char	*SV_ExpandNewlines( char *in );
 
 
 
-void PIXBeginNamedEvent(int, const char*);
+void PIXBeginNamedEvent(int, const char*,...);
 
 
 #include "q_math.h"
@@ -340,7 +361,8 @@ enum ParseTokenType
   PARSE_TOKEN_PUNCTUATION = 0x5
 };
 
-struct parseInfo_t{
+typedef struct parseInfo_t
+{
 	char token[MAX_TOKEN_CHARS];
 	enum ParseTokenType tokenType;
 	int lines;
@@ -354,7 +376,7 @@ struct parseInfo_t{
 	int backup_lines;
 	const char *backup_text;
 	const char *parseFile;
-};
+} parseInfo_t;
 
 
 
@@ -372,7 +394,7 @@ int Com_GetCurrentParseLine( void );
 struct parseInfo_t *Com_Parse( const char *( *data_p ) );
 struct parseInfo_t *Com_ParseOnLine( const char *( *data_p ) );
 const char *Com_ParseRestOfLine( const char *( *data_p ) );
-
+const char *__cdecl Com_GetLastTokenPos();
 void Com_UngetToken( void );
 /*
 #ifdef __cplusplus
@@ -434,7 +456,7 @@ void QDECL Com_Error( int a, const char *error, ...);
 
 
 #define SOLID_BMODEL 0xffffff
-
+#define MASK_EFLAGS 0xFFFFFF
 /*
 =================
 PlaneTypeForNormal
@@ -512,6 +534,8 @@ typedef struct
 
 
 #define MAX_HUDELEMENTS 31
+#define MAX_HUDELEMS_ARCHIVAL MAX_HUDELEMENTS
+#define MAX_HUDELEMS_CURRENT MAX_HUDELEMENTS
 
 typedef enum
 {
@@ -614,6 +638,21 @@ typedef enum {
 } fsOrigin_t;
 
 
+struct lerpFrame_t
+{
+  float yawAngle;
+  int yawing;
+  float pitchAngle;
+  int pitching;
+  int animationNumber;
+  struct animation_s *animation;
+  int animationTime;
+  vec3_t oldFramePos;
+  float animSpeedScale;
+  int oldFrameSnapshotTime;
+};
+
+
 
 //=============================================
 
@@ -674,9 +713,11 @@ void    COM_MatchToken( char**buf_p, char *match );
 
 void    Swap_Init( void );
 
-/*
+#define POF_PLAYER 4
+
+
 #define random()    ( ( rand() & 0x7fff ) / ( (float)0x7fff ) )
-#define crandom()   ( 2.0 * ( random() - 0.5 ) )
+/*#define crandom()   ( 2.0 * ( random() - 0.5 ) )
 */
 qboolean Assert_MyHandler(const char* exp, const char *filename, int line, const char *function, const char *fmt, ...);
 
@@ -688,8 +729,17 @@ qboolean Assert_MyHandler(const char* exp, const char *filename, int line, const
 #define assert ASSERT
 #define assertx XASSERT
 #define ASSERT_HANDLER(x, f, l, fu, ...) (Assert_MyHandler(x, f, l, fu, __VA_ARGS__))
+
+#ifdef NDEBUG
+#define XASSERT(x, ...)
+#define ASSERT(x)
+
+#else
 #define XASSERT(x, ...) (!(x) && ASSERT_HANDLER(#x, __FILE__, __LINE__, __func__, __VA_ARGS__) && (ASSERT_HALT(), 1))
 #define ASSERT(x) XASSERT(x, NULL)
+
+#endif
+
 
 #ifdef __cplusplus
 #include <cstdlib>
@@ -699,11 +749,32 @@ qboolean Assert_MyHandler(const char* exp, const char *filename, int line, const
 #endif
 
 
-#include "q_platform.h"
-#include "q_math.h"
-#include "sys_cod4defs.h"
-#include "entity.h"
+typedef enum
+{
+  SASYS_UI = 0x0,
+  SASYS_CGAME = 0x1,
+  SASYS_GAME = 0x2,
+  SASYS_COUNT = 0x3,
+}snd_alias_system_t;
 
+#define UNREACHABLE_CODE 0
+
+typedef enum team_s{
+	TEAM_FREE,
+	TEAM_RED,
+	TEAM_BLUE,
+	TEAM_SPECTATOR,
+	TEAM_NUM_TEAMS
+}team_t;
+
+#ifndef CLIPHANDLE_DEFINED
+#define CLIPHANDLE_DEFINED
+typedef unsigned int clipHandle_t;
 #endif
 
+#include "q_platform.h"
+#include "q_shared.h"
+#include "sys_cod4defs.h"
+
+#endif
 

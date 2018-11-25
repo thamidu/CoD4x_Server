@@ -80,7 +80,6 @@ typedef struct game_hudelem_s
 extern struct game_hudelem_s g_hudelems[1024];
 
 qboolean OnSameTeam( gentity_t *ent1, gentity_t *ent2 );
-qboolean Cmd_FollowClient_f(gentity_t *ent, int clientnum);
 game_hudelem_t* G_GetNewHudElem(unsigned int clnum);
 void G_HudSetText(game_hudelem_t*, const char*);
 void G_HudSetPosition(game_hudelem_t*, float x, float y, hudscrnalign_t, hudscrnalign_t, hudalign_t alignx, hudalign_t aligny);
@@ -89,7 +88,9 @@ void G_HudSetMovingOverTime(game_hudelem_t*, int, float newx, float newy);
 void G_HudSetFont(game_hudelem_t*, float fontscale, fonttype_t ft);
 void G_HudSetFadingOverTime(game_hudelem_t* element ,int time, ucolor_t newcolor);
 void G_HudDestroy(game_hudelem_t* element);
-
+game_hudelem_t *__cdecl HudElem_Alloc(int clientNum, int teamNum);
+void HudElem_SetDefaults(game_hudelem_t *);
+void HudElem_ClearTypeSettings(game_hudelem_t *);
 
 #endif
 

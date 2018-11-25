@@ -1,4 +1,5 @@
 ;Imports of db_assetnames:
+	extern DB_MaterialSetName
 
 ;Exports of db_assetnames:
 	global DB_GetXAssetSizeHandler
@@ -33,7 +34,6 @@
 	global DB_PhysPresetSetName
 	global DB_XAnimPartsSetName
 	global DB_XModelSetName
-	global DB_MaterialSetName
 	global DB_MaterialTechniqueSetSetName
 	global DB_ImageSetName
 	global DB_SoundSetName
@@ -82,10 +82,7 @@
 	global DB_FxImpactTableGetName
 	global DB_RawFileGetName
 	global DB_StringTableGetName
-	global DB_GetXAssetName
-	global DB_SetXAssetName
 	global DB_GetXAssetTypeSize
-	global DB_GetXAssetHeaderName
 	global g_assetNames
 
 
@@ -367,19 +364,6 @@ DB_XAnimPartsSetName:
 
 ;DB_XModelSetName(XAssetHeader*, char const*)
 DB_XModelSetName:
-	push ebp
-	mov ebp, esp
-	mov eax, [ebp+0x8]
-	mov edx, [eax]
-	mov eax, [ebp+0xc]
-	mov [edx], eax
-	pop ebp
-	ret
-	nop
-
-
-;DB_MaterialSetName(XAssetHeader*, char const*)
-DB_MaterialSetName:
 	push ebp
 	mov ebp, esp
 	mov eax, [ebp+0x8]
@@ -950,51 +934,12 @@ DB_StringTableGetName:
 	ret
 
 
-;DB_GetXAssetName(XAsset const*)
-DB_GetXAssetName:
-	push ebp
-	mov ebp, esp
-	mov eax, [ebp+0x8]
-	mov edx, [eax]
-	add eax, 0x4
-	mov [ebp+0x8], eax
-	mov ecx, [edx*4+DB_XAssetGetNameHandler]
-	pop ebp
-	jmp ecx
-	add [eax], al
-
-
-;DB_SetXAssetName(XAsset*, char const*)
-DB_SetXAssetName:
-	push ebp
-	mov ebp, esp
-	mov eax, [ebp+0x8]
-	mov edx, [eax]
-	add eax, 0x4
-	mov [ebp+0x8], eax
-	mov ecx, [edx*4+DB_XAssetSetNameHandler]
-	pop ebp
-	jmp ecx
-
-
 ;DB_GetXAssetTypeSize(int)
 DB_GetXAssetTypeSize:
 	push ebp
 	mov ebp, esp
 	mov eax, [ebp+0x8]
 	mov ecx, [eax*4+DB_GetXAssetSizeHandler]
-	pop ebp
-	jmp ecx
-
-
-;DB_GetXAssetHeaderName(int, XAssetHeader const*)
-DB_GetXAssetHeaderName:
-	push ebp
-	mov ebp, esp
-	mov eax, [ebp+0x8]
-	mov edx, [ebp+0xc]
-	mov [ebp+0x8], edx
-	mov ecx, [eax*4+DB_XAssetGetNameHandler]
 	pop ebp
 	jmp ecx
 

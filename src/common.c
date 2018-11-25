@@ -53,6 +53,13 @@
 #include "dobj.h"
 #include "xassets/extractor.h"
 #include "sec_update.h"
+#include "bg_public.h"
+#include "cscr_stringlist.h"
+#include "physicalmemory.h"
+#include "win_localize.h"
+#include "tests.h"
+#include "null_client.h"
+#include "db_load.h"
 
 #include <string.h>
 #include <setjmp.h>
@@ -86,9 +93,12 @@ qboolean com_securemode;
 char com_errorMessage[MAXPRINTMSG];
 qboolean com_errorEntered;
 qboolean com_fullyInitialized = qfalse;
+qboolean com_missingAssetOpenFailed;
 
+static int watchdog_timer;
 void Com_WriteConfig_f( void );
 void Com_WriteConfiguration( void );
+void* Debug_HitchWatchdog(void*);
 /*
 ========================================================================
 
@@ -149,6 +159,14 @@ void EventTimerTest(int time, int triggerTime, int value, char* s){
 	Com_Printf(CON_CHANNEL_SYSTEM,"^5Event exectuted: %i %i %i %i %s\n", time, triggerTime, Sys_Milliseconds(), value, s);
 
 }
+
+void CCS_InitConstantConfigStrings();
+void Com_ShutdownDObj();
+void DObjShutdown();
+void XAnimShutdown();
+void Com_ShutdownWorld();
+void CM_Shutdown();
+void Init_Watchdog();
 
 
 /*
@@ -568,7 +586,7 @@ void Com_Quit_f( void ) {
 
   Com_Printf(CON_CHANNEL_SYSTEM,"All plugins have terminated\n");
 
-	Sys_EnterCriticalSection( 2 );
+//	Sys_EnterCriticalSection( CRITSECT_COM_ERROR );
 
 	Scr_Cleanup();
 	GScr_Shutdown();
@@ -597,7 +615,7 @@ void Com_Quit_f( void ) {
 		NET_Shutdown();
 	}
 
-	Sys_LeaveCriticalSection( 2 );
+//	Sys_LeaveCriticalSection( CRITSECT_COM_ERROR );
 
 	Sys_Quit ();
 }
@@ -619,7 +637,9 @@ static void Com_InitCvars( void ){
     com_version = Cvar_RegisterString ("version", s, CVAR_ROM | CVAR_SERVERINFO , "Game version");
     com_shortversion = Cvar_RegisterString ("shortversion", Q3_VERSION, CVAR_ROM | CVAR_SERVERINFO , "Short game version");
 
-    Cvar_RegisterString ("build", va("%i", Sys_GetBuild()), CVAR_ROM | CVAR_SERVERINFO , "");
+    Cvar_RegisterInt ("build", Sys_GetBuild(), Sys_GetBuild(), Sys_GetBuild(), CVAR_ROM | CVAR_SERVERINFO, "Count of SCM commits since project has been started");
+    Cvar_RegisterString("branch", Sys_GetBranch(), CVAR_ROM | CVAR_SERVERINFO, "Name of SCM branch");
+    Cvar_RegisterString("revision", Sys_GetRevision(), CVAR_ROM | CVAR_SERVERINFO, "Hash of SCM revision");
     useFastFile = Cvar_RegisterBool ("useFastFiles", qtrue, 16, "Enables loading data from fast files");
     //MasterServer
     //AuthServer
@@ -632,103 +652,6 @@ static void Com_InitCvars( void ){
     com_sv_running = Cvar_RegisterBool("sv_running", qfalse, 64, "Server is running");
     com_securemodevar = Cvar_RegisterBool("securemode", qfalse, CVAR_INIT, "CoD4 runs in secure mode which restricts execution of external scripts/programs and loading of unauthorized shared libraries/plugins. This is recommended in a shared hosting environment");
     com_securemode = com_securemodevar->boolean;
-}
-
-
-void Com_CopyCvars()
-{
-    *(cvar_t**)0x88a6170 = useFastFile;
-    *(cvar_t**)0x88a6184 = com_developer;
-    *(cvar_t**)0x88a6188 = com_developer_script;
-    *(cvar_t**)0x88a61b0 = com_logfile;
-    *(cvar_t**)0x88a61a8 = com_sv_running;
-
-}
-
-void Com_PatchError()
-{
-	*(char**)0x8121C28 = com_errorMessage;
-	*(char**)0x81225C5 = com_errorMessage;
-	*(char**)0x812262C = com_errorMessage;
-	*(char**)0x812265A = com_errorMessage;
-	*(char**)0x8123CFB = com_errorMessage;
-	*(char**)0x8123D45 = com_errorMessage;
-	*(char**)0x8123DAB = com_errorMessage;
-	*(char**)0x8123E40 = com_errorMessage;
-	*(char**)0x8123EBA = com_errorMessage;
-	*(char**)0x8123F1E = com_errorMessage;
-	*(char**)0x81240A3 = com_errorMessage;
-}
-
-
-void Com_InitGamefunctions()
-{
-    int msec = 0;
-
-    FS_CopyCvars();
-    Com_CopyCvars();
-    SV_CopyCvars();
-//    XAssets_PatchLimits();  //Patch several asset-limits to higher values
-    SL_Init();
-    Swap_Init();
-
-    CSS_InitConstantConfigStrings();
-
-    if(useFastFile->boolean){
-
-        PMem_Init();
-
-        DB_SetInitializing( qtrue );
-
-        Com_Printf(CON_CHANNEL_SYSTEM,"begin $init\n");
-
-        msec = Sys_Milliseconds();
-
-        PMem_BeginAlloc("$init", qtrue);
-    }
-//    Con_InitChannels();
-
-    if(!useFastFile->boolean) SEH_UpdateLanguageInfo();
-
-    Com_InitHunkMemory();
-
-    Hunk_InitDebugMemory();
-
-    Scr_InitVariables();
-
-    Scr_Init(); //VM_Init
-
-    Scr_Settings(com_logfile->integer || com_developer->integer ,com_developer_script->integer, com_developer->integer);
-
-    XAnimInit();
-
-    DObjInit();
-
-    PMem_EndAlloc("$init", qtrue);
-    DB_SetInitializing( qfalse );
-    Com_Printf(CON_CHANNEL_SYSTEM,"end $init %d ms\n", Sys_Milliseconds() - msec);
-
-    SV_Cmd_Init();
-    SV_AddOperatorCommands();
-    SV_RemoteCmdInit();
-
-    cvar_t **msg_dumpEnts = (cvar_t**)(0x8930c1c);
-    cvar_t **msg_printEntityNums = (cvar_t**)(0x8930c18);
-    *msg_dumpEnts = Cvar_RegisterBool( "msg_dumpEnts", qfalse, CVAR_TEMP, "Print snapshot entity info");
-    *msg_printEntityNums = Cvar_RegisterBool( "msg_printEntityNums", qfalse, CVAR_TEMP, "Print entity numbers");
-
-    if(useFastFile->boolean)
-        R_Init();
-
-    Com_InitParse();
-
-#ifdef PUNKBUSTER
-    Com_AddRedirect(PbCaptureConsoleOutput_wrapper);
-    if(!PbServerInitialize()){
-        Com_Printf(CON_CHANNEL_SYSTEM,"Unable to initialize PunkBuster.  PunkBuster is disabled.\n");
-    }
-#endif
-
 }
 
 
@@ -754,6 +677,8 @@ void Com_Init(char* commandLine){
     if(setjmp(*abortframe)){
         Sys_Error(va("Error during Initialization:\n%s\n", com_errorMessage));
     }
+    if(com_errorEntered) Com_Error(ERR_FATAL,"Recursive error");
+
     Com_Printf(CON_CHANNEL_SYSTEM,"%s %s %s build %i %s\n", GAME_STRING,Q3_VERSION,PLATFORM_STRING, Sys_GetBuild(), __DATE__);
 
 
@@ -782,6 +707,8 @@ void Com_Init(char* commandLine){
     Sec_Update( qfalse );
 
     FS_InitFilesystem();
+
+    Win_InitLocalization();
 
     if(FS_SV_FileExists("securemode"))
     {
@@ -868,17 +795,8 @@ void Com_Init(char* commandLine){
     com_frameTime = Sys_Milliseconds();
 
     NV_LoadConfig();
-
-    Com_Printf(CON_CHANNEL_SYSTEM,"--- Common Initialization Complete ---\n");
-
     Cbuf_Execute( 0, 0 );
 
-    abortframe = (jmp_buf*)Sys_GetValue(2);
-
-    if(setjmp(*abortframe)){
-        Sys_Error(va("Error during Initialization:\n%s\n", com_errorMessage));
-    }
-    if(com_errorEntered) Com_Error(ERR_FATAL,"Recursive error");
 
 
     HL2Rcon_Init( );
@@ -892,13 +810,83 @@ void Com_Init(char* commandLine){
 
     AddRedirectLocations( );
 
-    Com_InitGamefunctions();
+
+    int msec = 0;
+
+//    XAssets_PatchLimits();  //Patch several asset-limits to higher values
+    SL_Init();
+    Swap_Init();
+
+    CCS_InitConstantConfigStrings();
+
+    if(useFastFile->boolean){
+
+        PMem_Init();
+
+        DB_SetInitializing( qtrue );
+
+        Com_Printf(CON_CHANNEL_SYSTEM,"begin $init\n");
+
+        msec = Sys_Milliseconds();
+
+        PMem_BeginAlloc("$init", qtrue, TRACK_MISC);
+        DB_InitThread();
+    }
+//    Con_InitChannels();
+
+    if(!useFastFile->boolean) SEH_UpdateLanguageInfo();
+
+    Com_InitHunkMemory();
+
+    Hunk_InitDebugMemory();
+
+    Scr_InitVariables();
+
+    Scr_Init(); //VM_Init
+
+    Scr_Settings(com_logfile->integer || com_developer->integer ,com_developer_script->integer, com_developer->integer);
+
+    XAnimInit();
+
+    DObjInit();
+
+    PMem_EndAlloc("$init", qtrue);
+    DB_SetInitializing( qfalse );
+    Com_Printf(CON_CHANNEL_SYSTEM,"end $init %d ms\n", Sys_Milliseconds() - msec);
+
+    SV_RemoteCmdInit();
+
+    if(useFastFile->boolean)
+        R_Init();
+
+    Com_InitParse();
+
+#ifdef PUNKBUSTER
+    Com_AddRedirect(PbCaptureConsoleOutput_wrapper);
+    if(!PbServerInitialize()){
+        Com_Printf(CON_CHANNEL_SYSTEM,"Unable to initialize PunkBuster.  PunkBuster is disabled.\n");
+    }
+#endif
+
+
+    Com_Printf(CON_CHANNEL_SYSTEM,"--- Common Initialization Complete ---\n");
+
+
 
     com_fullyInitialized = qtrue;
 
     Com_AddStartupCommands( );
 
+    abortframe = (jmp_buf*)Sys_GetValue(2);
 
+    if(setjmp(*abortframe)){
+        Sys_Error(va("Error during Initialization:\n%s\n", com_errorMessage));
+    }
+    Tests_Init();
+    CM_DebugInit();
+
+
+//    Init_Watchdog();
 }
 
 
@@ -1140,6 +1128,11 @@ __optimize3 void Com_Frame( void ) {
 		Com_Error(0, "Error Cleanup");
 	}
 	Sys_LeaveCriticalSection(CRITSECT_COM_ERROR);
+
+	Sys_EnterCriticalSection(CRITSECT_WATCHDOG);
+	watchdog_timer = 0;
+	Sys_LeaveCriticalSection(CRITSECT_WATCHDOG);
+
 }
 
 
@@ -1325,10 +1318,15 @@ void QDECL Com_Error( int code, const char *fmt, ... ) {
 	int		currentTime;
 	jmp_buf*	abortframe;
 	mvabuf;
+	char l_errorMessage[4096];
 
+#ifndef NDEBUG
+	Com_Printf(CON_CHANNEL_ERROR,"Com_Error entered:\n");
+	Sys_PrintBacktrace();
+#endif
 
 	if(com_developer && com_developer->integer > 1)
-		__builtin_trap ( ); // SIGILL on windows - crash. Have to do something?
+		asm ("int $3"); // SIGILL on windows - crash. Have to do something?
 
 	Sys_EnterCriticalSection(CRITSECT_COM_ERROR);
 
@@ -1337,11 +1335,28 @@ void QDECL Com_Error( int code, const char *fmt, ... ) {
 		com_errorEntered = qtrue;
 
 		va_start (argptr,fmt);
-		Q_vsnprintf (com_errorMessage, sizeof(com_errorMessage),fmt,argptr);
+		Q_vsnprintf (l_errorMessage, sizeof(l_errorMessage),fmt,argptr);
+
 		va_end (argptr);
+
+		Q_strncpyz(com_errorMessage, l_errorMessage, sizeof(com_errorMessage));
+
 		lastErrorCode = code;
 		/* Terminate this thread and wait for the main-thread entering this function */
+		if(Sys_IsDatabaseThread())
+		{
+			Sys_DatabaseCompleted();
+
+			Sys_LeaveCriticalSection(CRITSECT_COM_ERROR);
+
+			Com_Printf(CON_CHANNEL_ERROR, "%s\n", l_errorMessage);
+			abortframe = (jmp_buf*)Sys_GetValue(2);
+			longjmp (*abortframe, -1);
+		}
 		Sys_LeaveCriticalSection(CRITSECT_COM_ERROR);
+
+		Com_Printf(CON_CHANNEL_ERROR, "%s\n", l_errorMessage);
+
 		Sys_ExitThread(-1);
 		return;
 	}
@@ -1491,4 +1506,128 @@ void Com_GetBspFilename(char *bspfilename, size_t len, const char *levelname)
 void __cdecl Com_ErrorAbort()
 {
   Sys_Error("%s", &com_errorMessage);
+}
+
+
+void __cdecl Com_SetScriptSettings()
+{
+  int abort_on_error;
+  int deven;
+
+  deven = com_developer->integer || com_logfile->integer;
+  abort_on_error = com_developer->integer;
+  Scr_Settings(deven, com_developer_script->boolean, abort_on_error);
+//  Scr_Settings(deven, com_developer_script->current.enabled, abort_on_error, SCRIPTINSTANCE_CLIENT);
+}
+
+void __cdecl Com_Restart()
+{
+//  XZoneInfo zoneInfo[1];
+
+//  com_codeTimeScale = 1.0;
+  CL_ShutdownHunkUsers();
+  SV_ShutdownGameProgs();
+  Com_ShutdownDObj();
+  DObjShutdown();
+  XAnimShutdown();
+  Com_ShutdownWorld();
+  CM_Shutdown();
+  SND_ShutdownChannels();
+  Hunk_Clear();
+  Hunk_ResetDebugMem();
+  if ( useFastFile->boolean )
+  {
+    DB_ReleaseXAssets();
+  }
+  Com_SetScriptSettings();
+  com_fixedConsolePosition = 0;
+  XAnimInit();
+  DObjInit();
+  Com_InitDObj();
+}
+
+void Com_Close()
+{
+  Com_ShutdownDObj();
+  DObjShutdown();
+  XAnimShutdown();
+  Com_ShutdownWorld();
+  CM_Shutdown();
+  SND_ShutdownChannels();
+  Hunk_Clear();
+  if ( useFastFile->boolean )
+  {
+    DB_ShutdownXAssets();
+    DB_ShutdownXAssetPools();
+  }
+  Scr_Shutdown( );
+  Hunk_ShutdownDebugMemory();
+}
+
+int weaponInfoSource;
+
+void __cdecl Com_SetWeaponInfoMemory(int source)
+{
+  weaponInfoSource = source;
+}
+
+void __cdecl Com_FreeWeaponInfoMemory(int source)
+{
+  if ( source == weaponInfoSource )
+  {
+    weaponInfoSource = 0;
+    BG_ShutdownWeaponDefFiles();
+  }
+}
+
+const char *__cdecl Com_DisplayName(const char *name, const char *clanAbbrev, int type)
+{
+  const char *result;
+
+  if ( !*clanAbbrev )
+  {
+    type &= 0xFFFFFFFD;
+  }
+  switch ( type )
+  {
+    case 3:
+      result = va("[%s]%s", clanAbbrev, name);
+      break;
+    case 1:
+      result = name;
+      break;
+    case 2:
+      result = va("[%s]", clanAbbrev);
+      break;
+    default:
+      result = "";
+      break;
+  }
+  return result;
+}
+
+
+void* Debug_HitchWatchdog(void* arg)
+{
+    while(true)
+    {
+        Sys_EnterCriticalSection(CRITSECT_WATCHDOG);
+
+	++watchdog_timer;
+	if(watchdog_timer >= 40)
+	{
+		asm("int $3");
+	}
+	Sys_LeaveCriticalSection(CRITSECT_WATCHDOG);
+
+        Sys_SleepMSec(100);
+    }
+    return NULL;
+}
+
+void Init_Watchdog()
+{
+    threadid_t tid;
+    Sys_CreateNewThread(Debug_HitchWatchdog, &tid, NULL);
+    Sys_SetThreadName(tid, "Watchdog");
 }

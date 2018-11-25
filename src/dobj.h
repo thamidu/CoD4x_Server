@@ -43,7 +43,7 @@ typedef struct DSkelPartBits_s
 } DSkelPartBits_t;
 
 
-typedef struct DSkel_s
+typedef struct DSkel
 {
 	DSkelPartBits_t partBits;
 	int timeStamp;
@@ -53,19 +53,19 @@ typedef struct DSkel_s
 
 typedef struct DObj_s
 {
-	int *tree;
-	WORD duplicateParts;
-	WORD entNum;
-	byte duplicatePartsSize;
-	byte numModels;
-	byte numBones;
-	byte pad;
-	int ignoreCollision;
-	int locked;
-	DSkel_t skel;
-	int radius;
-	int hidePartBits[4];
-	struct XModel **models;
+  struct XAnimTree_s *tree;
+  uint16_t duplicateParts;
+  uint16_t entnum;
+  char duplicatePartsSize;
+  char numModels;
+  char numBones;
+  byte pad;
+  unsigned int ignoreCollision;
+  volatile int locked;
+  struct DSkel skel;
+  float radius;
+  int hidePartBits[4];
+  struct XModel **models;
 } DObj_t, DObj;
 
 struct DObjTrace_s
@@ -77,6 +77,12 @@ struct DObjTrace_s
   uint16_t partName;
   uint16_t partGroup;
 };
+
+
+
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 
 DObj_t* GetDObjForEntity(int entNum);
@@ -112,9 +118,17 @@ int __cdecl DObjGetNumModels(DObj *obj);
 struct XModel *__cdecl DObjGetModel(DObj *obj, int modelIndex);
 bool __cdecl DObjIgnoreCollision(DObj *obj, int modelIndex);
 void __cdecl ConvertQuatToMat(struct DObjAnimMat *mat, vec3_t axis[3]);
+void __cdecl DObjSetLocalTag(DObj *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles);
+void __cdecl DObjSetControlTagAngles(DObj *obj, int *partBits, unsigned int boneIndex, float *angles);
+void Com_InitDObj();
+void __cdecl DObjGetHierarchyBits(DObj *obj, int boneIndex, int *partBits);
+void __cdecl DObjCalcSkel(DObj *obj, int *partBits);
+#ifdef __cplusplus
+}
+#endif
 
-#define SV_ENTITY_DOBJS ((WORD*)  0x088E8500)    // Max = 0x400
-#define SV_DOBJ         ((DObj_t*)0x088E8D20)    // Max = 0x800
+extern uint16_t serverObjMap[1024];
+extern DObj_t objBuf[2048];
 
 #endif //__DOBJ_H__
 

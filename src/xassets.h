@@ -26,7 +26,8 @@
 
 #include "q_shared.h"
 #include "dobj.h"
-
+#include "xassets/weapondef.h"
+#include "xassets/material.h"
 #ifndef __cplusplus
 #include <stdbool.h>
 #endif
@@ -90,7 +91,8 @@ union XAssetHeader
   struct GfxImage *image;
   struct snd_alias_list_t *sound;
   struct SndCurve *sndCurve;
-  struct clipMap_t *clipMap;
+  struct LoadedSound_s* loadedsound;
+  struct clipMap_s *clipMap;
   struct ComWorld *comWorld;
   struct GameWorldSp *gameWorldSp;
   struct GameWorldMp *gameWorldMp;
@@ -110,8 +112,17 @@ union XAssetHeader
   void *data;
 };
 
+struct XAsset
+{
+  enum XAssetType type;
+  union XAssetHeader header;
+};
 
 extern char*** varXStringPtr;
+extern struct XModel** varXModelPtr;
+extern struct Material **varMaterialHandle;
+extern uint16_t* varScriptString;
+extern struct FxEffectDef** varFxEffectDefHandle;
 
 #ifdef __cplusplus
 extern "C"
@@ -119,7 +130,7 @@ extern "C"
 #endif
 
 void R_Init();
-void __cdecl DB_SetInitializing(qboolean);
+void __cdecl DB_SetInitializing(bool);
 qboolean __cdecl DB_FileExists(const char* filename, int mode);
 qboolean __cdecl DB_ModFileExists(void);
 void __cdecl DB_LoadXAssets(XZoneInfo*, unsigned int assetscount, int);
@@ -136,7 +147,50 @@ void DB_PostLoadXZone();
 void DB_UpdateDebugZone();
 void DB_AddUserMapDir(const char *dir);
 void DB_ReferencedFastFiles(char* g_zoneSumList, char* g_zoneNameList, int maxsize);
-union XAssetHeader __cdecl DB_FindXAssetHeader(enum XAssetType type, const char *name);
+int __cdecl DB_GetAllXAssetOfType(enum XAssetType type, union XAssetHeader *assets, int maxCount);
+void __cdecl DB_ConvertOffsetToPointer(void *data);
+void __cdecl Load_Stream(bool atStreamStart, const void *ptr, int size);
+byte *__cdecl DB_AllocStreamPos(int alignment);
+void __cdecl DB_LoadXFileData(byte *pos, int count);
+void __cdecl DB_LoadDelayedImages();
+void Load_XAssetListCustom();
+void __cdecl Load_XAsset(bool atStreamStart);
+void __cdecl Load_XStringCustom(const char **str);
+void __cdecl Load_ScriptStringList(bool atStreamStart);
+void __cdecl DB_IncStreamPos(int size);
+void __cdecl DB_PushStreamPos(unsigned int index);
+void __cdecl DB_PopStreamPos();
+void __cdecl Load_MaterialHandle(bool atStreamStart);
+void __cdecl Load_FxEffectDefHandle(bool atStreamStart);
+void __cdecl Load_ScriptStringCustom(uint16_t *var);
+void __cdecl Load_XModelPtr(bool atStreamStart);
+void __cdecl Load_XString(bool atStreamStart);
+void __cdecl Load_XAssetHeader(bool atStreamStart);
+const char* DB_GetXAssetName(struct XAsset*);
+void __cdecl Load_ScriptStringArray(bool atStreamStart, int count);
+void* __regparm2 DB_AddXAsset(int xassetType, void* header);
+void __cdecl DB_EnumXAssets_FastFile(enum XAssetType type, void (__cdecl *func)(union XAssetHeader, void *), void *inData, bool includeOverride);
+void __cdecl DB_EnumXAssets(enum XAssetType type, void (__cdecl *func)(union XAssetHeader, void *), void *inData, bool includeOverride);
+
+#if defined( __GNUC__ ) && !defined( __MINGW32__ )
+//For GCC
+void* __cdecl DB_FindXAssetHeaderReal(enum XAssetType type, const char *name);
+static inline __attribute__((always_inline)) union XAssetHeader DB_FindXAssetHeader(enum XAssetType type, const char *name)
+{
+    union XAssetHeader r;
+
+    r.data = DB_FindXAssetHeaderReal(type, name);
+    return r;
+}
+
+#else
+
+//For MSVC & MinGW
+union XAssetHeader __cdecl DB_FindXAssetHeaderReal(enum XAssetType type, const char *name);
+#define DB_FindXAssetHeader DB_FindXAssetHeaderReal
+
+#endif
+
 void __cdecl Load_XStringPtr(bool atStreamstart);
 
 
@@ -149,28 +203,32 @@ void __cdecl Load_XStringPtr(bool atStreamstart);
 
 
 
+struct ScriptStringList
+{
+  int count;
+  const char **strings;
+};
 
 
+struct XAssetList
+{
+  struct ScriptStringList stringList;
+  int assetCount;
+  struct XAsset *assets;
+};
 
+
+extern struct XAssetList* varXAssetList;
+extern struct XAsset* varXAsset;
+extern union XAssetHeader *varXAssetHeader;
+extern int g_poolSize[ASSET_TYPE_COUNT];
+extern const char* g_assetNames[ASSET_TYPE_COUNT];
 
 /*
 ------------------------------------------------------------------------
 Just structures here I am too lazy to create headerfiles for now
 ------------------------------------------------------------------------
 */
-
-typedef struct _AILSOUNDINFO
-{
-  signed int format;
-  const void *data_ptr;
-  unsigned int data_len;
-  unsigned int rate;
-  signed int bits;
-  signed int channels;
-  unsigned int samples;
-  unsigned int block_size;
-  const void *initial_ptr;
-}AILSOUNDINFO;
 
 typedef struct
 {
@@ -180,4 +238,5 @@ typedef struct
 
 
 #endif
+
 

@@ -85,6 +85,9 @@
 	extern DObjSetLocalBoneIndex
 	extern Com_IsLegacyXModelName
 	extern SV_SetBrushModel
+	extern s_wheelTags
+	extern s_vehicleInfos
+
 
 ;Exports of g_vehicles_mp:
 	global s_vehicleFields
@@ -99,20 +102,18 @@
 	global VEH_TouchEntities
 	global VEH_GroundPlant
 	global InitFirstThink
-	global VEH_SlideMove
+	global _Z13VEH_SlideMoveP9gentity_sif
 	global VEH_StepSlideMove
 	global IntegratePosAndRot
 	global G_VehUsable
-	global G_VehSpawner
 	global SpawnVehicle
 	global VEH_JoltBody_copy
 	global G_VehiclesInit
 	global G_VehFreeEntity
-	global VEH_SetPosition
+	global _Z15VEH_SetPositionP9gentity_sPKfS2_
 	global G_VehUnlinkPlayer
 	global G_VehRegisterDvars
 	global VEH_GetVehicleInfo
-	global G_VehCollmapSpawner
 	global G_VehEntHandler_Die
 	global G_VehEntHandler_Use
 	global G_VehImmuneToDamage
@@ -122,7 +123,6 @@
 	global G_VehEntHandler_Touch
 	global G_VehEntHandler_Controller
 	global G_VehiclesSetupSpawnedEnts
-	global s_vehicleInfos
 	global s_numVehicleInfos
 	global s_vehicles
 	global s_wheelTags
@@ -2040,7 +2040,7 @@ InitFirstThink_20:
 	mov [esp+0x4], edx
 	mov ecx, [ebp+0x8]
 	mov [esp], ecx
-	call VEH_SetPosition
+	call _Z15VEH_SetPositionP9gentity_sPKfS2_
 	mov edx, [ebp-0x4c]
 	add edx, 0xc
 	mov ecx, [ebp-0x4c]
@@ -2120,7 +2120,7 @@ InitFirstThink_10:
 
 
 ;VEH_SlideMove(gentity_s*, int, float)
-VEH_SlideMove:
+_Z13VEH_SlideMoveP9gentity_sif:
 	push ebp
 	mov ebp, esp
 	push edi
@@ -2962,7 +2962,7 @@ VEH_StepSlideMove:
 	movss [ebp-0x74], xmm0
 	movss xmm0, dword [ebp-0x90]
 	mov eax, esi
-	call VEH_SlideMove
+	call _Z13VEH_SlideMoveP9gentity_sif
 	test eax, eax
 	jnz VEH_StepSlideMove_10
 VEH_StepSlideMove_40:
@@ -3062,7 +3062,7 @@ VEH_StepSlideMove_20:
 	mov edx, [ebp-0x8c]
 	mov eax, esi
 	movss [ebp-0xa8], xmm1
-	call VEH_SlideMove
+	call _Z13VEH_SlideMoveP9gentity_sif
 	mov eax, [ebx+0xc0]
 	mov [ebp-0x3c], eax
 	mov eax, [ebx+0xc4]
@@ -4159,27 +4159,6 @@ G_VehUsable_30:
 	nop
 
 
-;G_VehSpawner(gentity_s*)
-G_VehSpawner:
-	push ebp
-	mov ebp, esp
-	sub esp, 0x28
-	lea eax, [ebp-0xc]
-	mov [esp+0x8], eax
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_vehicletype
-	call G_LevelSpawnString
-	mov dword [esp+0x8], 0x1
-	mov eax, [ebp-0xc]
-	mov [esp+0x4], eax
-	mov eax, [ebp+0x8]
-	mov [esp], eax
-	call SpawnVehicle
-	leave
-	ret
-	nop
-	add [eax], al
-
 
 ;SpawnVehicle(gentity_s*, char const*, int)
 SpawnVehicle:
@@ -4405,7 +4384,7 @@ SpawnVehicle_90:
 	mov edx, [ebp-0x34]
 	mov [esp+0x4], edx
 	mov [esp], edi
-	call VEH_SetPosition
+	call _Z15VEH_SetPositionP9gentity_sPKfS2_
 	mov ecx, [edi+0x164]
 	mov [ebp-0x20], ecx
 	xor esi, esi
@@ -4720,11 +4699,12 @@ G_VehiclesInit:
 	mov word [s_numVehicleInfos], 0x0
 G_VehiclesInit_30:
 	mov eax, s_vehicles
-	mov edx, vehTestMaxMPH
+	xor edx, edx
 G_VehiclesInit_20:
 	mov dword [eax+0x1b8], 0x3ff
 	add eax, 0x354
-	cmp edx, eax
+	inc edx
+	cmp edx, 8
 	jnz G_VehiclesInit_20
 	mov eax, level
 	mov dword [eax+0x2e68], s_vehicles
@@ -4821,7 +4801,7 @@ G_VehFreeEntity:
 
 
 ;VEH_SetPosition(gentity_s*, float const*, float const*)
-VEH_SetPosition:
+_Z15VEH_SetPositionP9gentity_sPKfS2_:
 	push ebp
 	mov ebp, esp
 	push esi
@@ -5044,18 +5024,6 @@ VEH_GetVehicleInfo:
 	sub eax, edx
 	shl eax, 0x4
 	add eax, s_vehicleInfos
-	pop ebp
-	ret
-	nop
-
-
-;G_VehCollmapSpawner(gentity_s*)
-G_VehCollmapSpawner:
-	push ebp
-	mov ebp, esp
-	mov eax, [ebp+0x8]
-	mov dword [eax+0x120], 0x0
-	mov dword [eax+0x4], 0xf
 	pop ebp
 	ret
 	nop
@@ -5645,7 +5613,7 @@ G_VehEntHandler_Think_70:
 	mov [esp+0x4], edx
 	mov ecx, [ebp+0x8]
 	mov [esp], ecx
-	call VEH_SetPosition
+	call _Z15VEH_SetPositionP9gentity_sPKfS2_
 	movss xmm0, dword [ebp-0xb0]
 	movss [esp+0x4], xmm0
 	mov eax, [ebp+0x8]
@@ -6481,7 +6449,6 @@ G_VehiclesSetupSpawnedEnts_80:
 SECTION .data
 s_vehicleFields: dd _cstring_type, 0x40, 0xc, _cstring_steerwheels, 0x44, 0x5, _cstring_texurescroll, 0x48, 0x5, _cstring_quadbarrel, 0x4c, 0x5, _cstring_bulletdamage, 0x50, 0x5, _cstring_armorpiercingdam, 0x54, 0x5, _cstring_grenadedamage, 0x58, 0x5, _cstring_projectiledamage, 0x5c, 0x5, _cstring_projectilesplash, 0x60, 0x5, _cstring_heavyexplosiveda, 0x64, 0x5, _cstring_texurescrollscal, 0x68, 0x6, _cstring_maxspeed, 0x6c, 0x6, _cstring_accel, 0x70, 0x6, _cstring_rotrate, 0x74, 0x6, _cstring_rotaccel, 0x78, 0x6, _cstring_collisiondamage, 0x84, 0x6, _cstring_collisionspeed, 0x88, 0x6, _cstring_suspensiontravel, 0x8c, 0x6, _cstring_maxbodypitch, 0x7c, 0x6, _cstring_maxbodyroll, 0x80, 0x6, _cstring_turretweapon, 0x90, 0x0, _cstring_turrethorizspanl, 0xd0, 0x6, _cstring_turrethorizspanr, 0xd4, 0x6, _cstring_turretvertspanup, 0xd8, 0x6, _cstring_turretvertspando, 0xdc, 0x6, _cstring_turretrotrate, 0xe0, 0x6, _cstring_lowidlesnd, 0xe4, 0x0, _cstring_highidlesnd, 0x124, 0x0, _cstring_lowenginesnd, 0x164, 0x0, _cstring_highenginesnd, 0x1a4, 0x0, _cstring_turretspinsnd, 0x1e4, 0x0, _cstring_turretstopsnd, 0x224, 0x0, _cstring_enginesndspeed, 0x26c, 0x6
 s_vehicleTypeNames: dd _cstring_4_wheel, _cstring_tank, _cstring_plane, _cstring_boat, _cstring_artillery, _cstring_helicopter, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0
-s_wheelTags: dd 0x1708d4e, 0x1708d50, 0x1708d52, 0x1708d54, 0x0, 0x0, 0x0, 0x0
 
 
 ;Initialized constant data of g_vehicles_mp:
@@ -6492,7 +6459,6 @@ SECTION .rdata
 SECTION .bss
 s_phys: resb 0x40
 s_backup: resb 0x1c0
-s_vehicleInfos: resb 0x4e00
 s_numVehicleInfos: resb 0x1c
 s_vehicles: resb 0x1aa0
 vehDebugServer: resb 0x30
@@ -6583,7 +6549,6 @@ _cstring_artillery:		db "artillery",0
 _cstring_helicopter:		db "helicopter",0
 
 
-
 ;All constant floats and doubles:
 SECTION .rdata
 _float_17_60000038:		dd 0x418ccccd	; 17.6
@@ -6593,11 +6558,9 @@ _float_90_00000000:		dd 0x42b40000	; 90
 _float_0_00277778:		dd 0x3b360b61	; 0.00277778
 _float_0_50000000:		dd 0x3f000000	; 0.5
 _float_360_00000000:		dd 0x43b40000	; 360
-_data16_7fffffff:		dd 0x7fffffff, 0x0, 0x0, 0x0	; OWORD
 _float_20_00000000:		dd 0x41a00000	; 20
 _float_0_01000000:		dd 0x3c23d70a	; 0.01
 _float_127_00000000:		dd 0x42fe0000	; 127
-_data16_80000000:		dd 0x80000000, 0x0, 0x0, 0x0	; OWORD
 _float_0_00000000:		dd 0x0	; 0
 _float_1_00000000:		dd 0x3f800000	; 1
 _float_2_00000000:		dd 0x40000000	; 2
@@ -6637,3 +6600,6 @@ _float_45_00000000:		dd 0x42340000	; 45
 _float__45_00000000:		dd 0xc2340000	; -45
 _float_0_19999999:		dd 0x3e4ccccc	; 0.2
 
+align   16,db 0
+_data16_80000000:		dd 0x80000000, 0x0, 0x0, 0x0	; DQWORD
+_data16_7fffffff:		dd 0x7fffffff, 0x0, 0x0, 0x0	; DQWORD

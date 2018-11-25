@@ -26,7 +26,7 @@
 	extern floorf
 	extern vehHelicopterSoftCollisions
 	extern vehHelicopterLookaheadTime
-	extern VEH_SlideMove
+	extern _Z13VEH_SlideMoveP9gentity_si
 	extern vec3_origin
 	extern VEH_ClearGround
 	extern vehHelicopterStrafeDeadzone
@@ -829,7 +829,7 @@ VEH_UpdateClientChopper_200:
 	movss [ebp-0x248], xmm5
 	movss [ebp-0x258], xmm6
 	movss [ebp-0x268], xmm7
-	call VEH_SlideMove
+	call _Z13VEH_SlideMoveP9gentity_si
 	movss xmm2, dword [ebx+0xc0]
 	movss xmm3, dword [ebx+0xc4]
 	movss xmm4, dword [ebx+0xc8]
@@ -974,7 +974,7 @@ VEH_UpdateClientChopper_240:
 	mov dword [esp+0x4], 0x0
 	mov edx, [ebp+0x8]
 	mov [esp], edx
-	call VEH_SlideMove
+	call _Z13VEH_SlideMoveP9gentity_si
 	test eax, eax
 	jnz VEH_UpdateClientChopper_260
 VEH_UpdateClientChopper_460:
@@ -1508,9 +1508,8 @@ SECTION .rdata
 ;All constant floats and doubles:
 SECTION .rdata
 _float_127_00000000:		dd 0x42fe0000	; 127
-_data16_7fffffff:		dd 0x7fffffff, 0x0, 0x0, 0x0	; OWORD
-_data16_80000000:		dd 0x80000000, 0x0, 0x0, 0x0	; OWORD
 _float_0_05000000:		dd 0x3d4ccccd	; 0.05
+
 _float_17_60000038:		dd 0x418ccccd	; 17.6
 _float_1_00000000:		dd 0x3f800000	; 1
 _float__1_00000000:		dd 0xbf800000	; -1
@@ -1521,3 +1520,6 @@ _float_0_00000000:		dd 0x0	; 0
 _float_20_00000000:		dd 0x41a00000	; 20
 _float_50_00000000:		dd 0x42480000	; 50
 
+align   16,db 0
+_data16_7fffffff:		dd 0x7fffffff, 0x0, 0x0, 0x0	; DQWORD
+_data16_80000000:		dd 0x80000000, 0x0, 0x0, 0x0	; DQWORD

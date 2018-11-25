@@ -1,3 +1,5 @@
+;Edited: Inverted registerDvars in G_InitGame
+
 ;Imports of g_main_mp:
 	extern Cvar_RegisterBool
 	extern Cvar_RegisterString
@@ -10,7 +12,6 @@
 	extern G_VehRegisterDvars
 	extern G_RegisterMissileDvars
 	extern G_RegisterMissileDebugDvars
-	extern BG_RegisterDvars
 	extern Com_ServerDObjCreate
 	extern Com_GetServerDObj
 	extern Com_SafeServerDObjFree
@@ -38,9 +39,8 @@
 	extern GScr_LoadConsts
 	extern G_SetupWeaponDef
 	extern Cvar_VariableBooleanValue
-	extern G_ProcessIPBans
 	extern SV_XModelGet
-	extern FS_FOpenFileByMode
+	extern G_OpenLogFile
 	extern Com_PrintWarning
 	extern Mantle_CreateAnims
 	extern bgs
@@ -151,49 +151,41 @@
 	extern Helicopter_Pain
 	extern Helicopter_Die
 	extern Helicopter_Controller
+	extern G_LogPrintf
+	extern G_SafeServerDObjFree
+	extern G_RegisterCvars
+	extern G_CloseLogFile
+	extern level
+	extern G_InitSomeVariables
 
 ;Exports of g_main_mp:
 	global g_clients
 	global g_entinfoNames
-	global _ZZ15G_RegisterDvarsvE28MY_DEFAULT_USEHOLDSPAWNDELAY
-	global G_RegisterDvars
 	global G_CreateDObj
 	global G_GetDObj
-	global G_SafeDObjFree
+	global _Z14G_SafeDObjFreeii
 	global SortRanks
 	global G_RunFrameForEntity
 	global ShowEntityInfo
 	global G_InitGame
 	global G_RunFrame
 	global G_RunThink
-	global G_LogPrintf
 	global G_SightTrace
 	global CalculateRanks
 	global G_ShutdownGame
-	global G_TraceCapsule
-	global G_GetClientSize
 	global G_AddDebugString
 	global G_GetClientScore
-	global G_GetClientState
-	global G_GetPlayerState
-	global G_GetSavePersist
-	global G_SetSavePersist
 	global G_LocationalTrace
 	global Hunk_AllocXAnimServer
-	global G_GetClientArchiveTime
-	global G_GetFogOpaqueDistSqrd
-	global G_SetClientArchiveTime
 	global G_TraceCapsuleComplete
 	global G_ExitAfterConnectPaths
 	global G_LocationalTracePassed
 	global G_LocationalTraceAllowChildren
 	global CheckVote
-	global ExitLevel
 	global g_compassShowEnemies
 	global bullet_penetrationEnabled
 	global g_debugLocDamage
 	global g_entities
-	global level
 	global g_dropForwardSpeed
 	global g_dropHorzSpeedRand
 	global g_dropUpSpeedBase
@@ -231,7 +223,6 @@
 	global g_inactivity
 	global g_mantleBlockTimeBuffer
 	global g_playerCollisionEjectSpeed
-	global g_smoothClients
 	global g_speed
 	global g_synchronousClients
 	global g_ScoresColor_Allies
@@ -271,610 +262,6 @@
 SECTION .text
 
 
-;G_RegisterDvars()
-G_RegisterDvars:
-	push ebp
-	mov ebp, esp
-	push edi
-	push esi
-	push ebx
-	sub esp, 0x2c
-	mov dword [esp+0xc], _cstring_enable_cheats
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_sv_cheats
-	call Cvar_RegisterBool
-	mov [g_cheats], eax
-	mov dword [esp+0xc], _cstring_the_name_of_the_
-	mov dword [esp+0x8], 0x44
-	mov dword [esp+0x4], _cstring_call_of_duty_4
-	mov dword [esp], _cstring_gamename
-	call Cvar_RegisterString
-	mov dword [esp+0xc], _cstring_the_date_compile
-	mov dword [esp+0x8], 0x40
-	mov dword [esp+0x4], _cstring_feb_12_2009
-	mov dword [esp], _cstring_gamedate
-	call Cvar_RegisterString
-	mov dword [esp+0xc], _cstring_the_current_map_
-	mov dword [esp+0x8], 0x44
-	mov dword [esp+0x4], _cstring_null
-	mov dword [esp], _cstring_sv_mapname
-	call Cvar_RegisterString
-	mov dword [esp+0xc], _cstring_the_current_camp
-	mov dword [esp+0x8], 0x24
-	mov dword [esp+0x4], _cstring_war
-	mov dword [esp], _cstring_g_gametype
-	call Cvar_RegisterString
-	mov [g_gametype], eax
-	mov dword [esp+0x14], _cstring_the_maximum_numb
-	mov dword [esp+0x10], 0x25
-	mov dword [esp+0xc], 0x40
-	mov dword [esp+0x8], 0x1
-	mov dword [esp+0x4], 0x20
-	mov dword [esp], _cstring_ui_maxclients
-	call Cvar_RegisterInt
-	mov dword [esp+0x14], _cstring_the_maximum_numb
-	mov dword [esp+0x10], 0x25
-	mov eax, [eax+0xc]
-	mov [esp+0xc], eax
-	mov dword [esp+0x8], 0x1
-	mov dword [esp+0x4], 0x20
-	mov dword [esp], _cstring_sv_maxclients
-	call Cvar_RegisterInt
-	mov [g_maxclients], eax
-	mov dword [esp+0xc], _cstring_call_client_thin
-	mov dword [esp+0x8], 0x8
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_g_synchronouscli
-	call Cvar_RegisterBool
-	mov [g_synchronousClients], eax
-	mov dword [esp+0xc], _cstring_log_file_name
-	mov dword [esp+0x8], 0x1
-	mov dword [esp+0x4], _cstring_games_mplog
-	mov dword [esp], _cstring_g_log
-	call Cvar_RegisterString
-	mov [g_log], eax
-	mov dword [esp+0xc], _cstring_enable_synchrono
-	mov dword [esp+0x8], 0x1
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_g_logsync
-	call Cvar_RegisterBool
-	mov [g_logSync], eax
-	mov dword [esp+0xc], _cstring_password
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], _cstring_null
-	mov dword [esp], _cstring_g_password
-	call Cvar_RegisterString
-	mov [g_password], eax
-	mov dword [esp+0xc], _cstring_ip_addresses_to_
-	mov dword [esp+0x8], 0x1
-	mov dword [esp+0x4], _cstring_null
-	mov dword [esp], _cstring_g_banips
-	call Cvar_RegisterString
-	mov [g_banIPs], eax
-	mov ebx, g_dedicatedEnumNames
-	mov dword [esp+0x10], _cstring_dedicated_server
-	mov dword [esp+0xc], 0x20
-	mov dword [esp+0x8], 0x0
-	mov [esp+0x4], ebx
-	mov dword [esp], _cstring_dedicated
-	call Cvar_RegisterEnum
-	mov [g_dedicated], eax
-	mov eax, [eax+0xc]
-	test eax, eax
-	jz G_RegisterDvars_10
-	mov dword [esp+0x10], _cstring_dedicated_server
-	mov dword [esp+0xc], 0x40
-	mov dword [esp+0x8], 0x0
-	mov [esp+0x4], ebx
-	mov dword [esp], _cstring_dedicated
-	call Cvar_RegisterEnum
-G_RegisterDvars_10:
-	mov dword [esp+0x14], _cstring_player_speed
-	mov dword [esp+0x10], 0x0
-	mov dword [esp+0xc], 0x7fffffff
-	mov dword [esp+0x8], 0x80000000
-	mov dword [esp+0x4], 0xbe
-	mov dword [esp], _cstring_g_speed
-	call Cvar_RegisterInt
-	mov [g_speed], eax
-	mov dword [esp+0x14], _cstring_game_gravity_in_
-	mov dword [esp+0x10], 0x0
-	mov dword [esp+0xc], 0x7f7fffff
-	mov dword [esp+0x8], 0x3f800000
-	mov dword [esp+0x4], 0x44480000
-	mov dword [esp], _cstring_g_gravity
-	call Cvar_RegisterFloat
-	mov [g_gravity], eax
-	mov dword [esp+0x14], _cstring_maximum_knockbac
-	mov dword [esp+0x10], 0x0
-	mov dword [esp+0xc], 0x7f7fffff
-	mov dword [esp+0x8], 0xff7fffff
-	mov esi, 0x447a0000
-	mov [esp+0x4], esi
-	mov dword [esp], _cstring_g_knockback
-	call Cvar_RegisterFloat
-	mov [g_knockback], eax
-	mov dword [esp+0x14], _cstring_maximum_number_o
-	mov dword [esp+0x10], 0x0
-	mov dword [esp+0xc], 0x20
-	mov dword [esp+0x8], 0x2
-	mov dword [esp+0x4], 0x10
-	mov dword [esp], _cstring_g_maxdroppedweap
-	call Cvar_RegisterInt
-	mov [g_maxDroppedWeapons], eax
-	mov dword [esp+0x14], _cstring_time_delay_befor
-	mov dword [esp+0x10], 0x0
-	mov dword [esp+0xc], 0x7fffffff
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_g_inactivity
-	call Cvar_RegisterInt
-	mov [g_inactivity], eax
-	mov dword [esp+0xc], _cstring_show_debug_infor
-	mov dword [esp+0x8], 0x80
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_g_debugdamage
-	call Cvar_RegisterBool
-	mov [g_debugDamage], eax
-	mov dword [esp+0x14], _cstring_show_debug_infor1
-	mov dword [esp+0x10], 0x80
-	mov dword [esp+0xc], 0x6
-	mov dword [esp+0x8], 0xfffffffd
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_g_debugbullets
-	call Cvar_RegisterInt
-	mov [g_debugBullets], eax
-	mov dword [esp+0xc], _cstring_enabledisable_bu
-	mov dword [esp+0x8], 0x80
-	mov dword [esp+0x4], 0x1
-	mov dword [esp], _cstring_bullet_penetrati
-	call Cvar_RegisterBool
-	mov [bullet_penetrationEnabled], eax
-	mov dword [esp+0x10], _cstring_display_entity_i
-	mov dword [esp+0xc], 0x80
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], g_entinfoNames
-	mov dword [esp], _cstring_g_entinfo
-	call Cvar_RegisterEnum
-	mov [g_entinfo], eax
-	mov dword [esp+0xc], _cstring_the_message_of_t
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], _cstring_null
-	mov dword [esp], _cstring_g_motd
-	call Cvar_RegisterString
-	mov [g_motd], eax
-	mov dword [esp+0x14], _cstring_speed_at_which_t
-	mov dword [esp+0x10], 0x1
-	mov dword [esp+0xc], 0x7d00
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x19
-	mov dword [esp], _cstring_g_playercollisio
-	call Cvar_RegisterInt
-	mov [g_playerCollisionEjectSpeed], eax
-	mov dword [esp+0x14], _cstring_forward_speed_of
-	mov dword [esp+0x10], 0x1
-	mov [esp+0xc], esi
-	mov dword [esp+0x8], 0x0
-	mov ebx, 0x41200000
-	mov [esp+0x4], ebx
-	mov dword [esp], _cstring_g_dropforwardspe
-	call Cvar_RegisterFloat
-	mov [g_dropForwardSpeed], eax
-	mov dword [esp+0x14], _cstring_base_component_o
-	mov dword [esp+0x10], 0x1
-	mov [esp+0xc], esi
-	mov dword [esp+0x8], 0x0
-	mov [esp+0x4], ebx
-	mov dword [esp], _cstring_g_dropupspeedbas
-	call Cvar_RegisterFloat
-	mov [g_dropUpSpeedBase], eax
-	mov dword [esp+0x14], _cstring_random_component
-	mov dword [esp+0x10], 0x1
-	mov [esp+0xc], esi
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x40a00000
-	mov dword [esp], _cstring_g_dropupspeedran
-	call Cvar_RegisterFloat
-	mov [g_dropUpSpeedRand], eax
-	mov dword [esp+0x14], _cstring_random_component1
-	mov dword [esp+0x10], 0x1
-	mov [esp+0xc], esi
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x42c80000
-	mov dword [esp], _cstring_g_drophorzspeedr
-	call Cvar_RegisterFloat
-	mov [g_dropHorzSpeedRand], eax
-	mov dword [esp+0x14], _cstring_maximum_velocity
-	mov dword [esp+0x10], 0x1
-	mov dword [esp+0xc], 0x7f7fffff
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x42a00000
-	mov dword [esp], _cstring_g_cloneplayermax
-	call Cvar_RegisterFloat
-	mov [g_clonePlayerMaxVelocity], eax
-	mov dword [esp+0xc], _cstring_send_voice_messa
-	mov dword [esp+0x8], 0x1
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_voice_global
-	call Cvar_RegisterBool
-	mov [voice_global], eax
-	mov dword [esp+0xc], _cstring_echo_voice_chat_
-	mov dword [esp+0x8], 0x1
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_voice_localecho
-	call Cvar_RegisterBool
-	mov [voice_localEcho], eax
-	mov dword [esp+0xc], _cstring_allow_dead_playe
-	mov dword [esp+0x8], 0x1
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_voice_deadchat
-	call Cvar_RegisterBool
-	mov [voice_deadChat], eax
-	mov dword [esp+0xc], _cstring_enable_voting_on
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x1
-	mov dword [esp], _cstring_g_allowvote
-	call Cvar_RegisterBool
-	mov [g_allowVote], eax
-	mov dword [esp+0xc], _cstring_list_the_entitie
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_g_listentity
-	call Cvar_RegisterBool
-	mov [g_listEntity], eax
-	mov dword [esp+0xc], _cstring_allow_dead_playe1
-	mov dword [esp+0x8], 0x1
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_g_deadchat
-	call Cvar_RegisterBool
-	mov [g_deadChat], eax
-	mov dword [esp+0x14], _cstring_time_after_the_l
-	mov dword [esp+0x10], 0x1
-	mov dword [esp+0xc], 0x2710
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x1f4
-	mov dword [esp], _cstring_g_voicechattalki
-	call Cvar_RegisterInt
-	mov [g_voiceChatTalkingDuration], eax
-	mov dword [esp+0xc], _cstring_shader_name_for_
-	mov dword [esp+0x8], 0x100
-	mov dword [esp+0x4], _cstring_faction_128_usmc
-	mov dword [esp], _cstring_g_teamicon_allie
-	call Cvar_RegisterString
-	mov [g_TeamIcon_Allies], eax
-	mov dword [esp+0xc], _cstring_shader_name_for_1
-	mov dword [esp+0x8], 0x100
-	mov dword [esp+0x4], _cstring_faction_128_arab
-	mov dword [esp], _cstring_g_teamicon_axis
-	call Cvar_RegisterString
-	mov [g_TeamIcon_Axis], eax
-	mov dword [esp+0xc], _cstring_shader_name_for_2
-	mov dword [esp+0x8], 0x100
-	mov dword [esp+0x4], _cstring_null
-	mov dword [esp], _cstring_g_teamicon_free
-	call Cvar_RegisterString
-	mov [g_TeamIcon_Free], eax
-	mov dword [esp+0xc], _cstring_shader_name_for_3
-	mov dword [esp+0x8], 0x100
-	mov dword [esp+0x4], _cstring_null
-	mov dword [esp], _cstring_g_teamicon_spect
-	call Cvar_RegisterString
-	mov [g_TeamIcon_Spectator], eax
-	mov dword [esp+0x18], _cstring_player_team_colo
-	mov dword [esp+0x14], 0x100
-	mov dword [esp+0x10], 0x3f800000
-	mov ebx, 0x3e800000
-	mov [esp+0xc], ebx
-	mov dword [esp+0x8], 0x3f3851ec
-	mov [esp+0x4], ebx
-	mov dword [esp], _cstring_g_scorescolor_my
-	call Cvar_RegisterColor
-	mov [g_ScoresColor_MyTeam], eax
-	mov dword [esp+0x18], _cstring_enemy_team_color
-	mov dword [esp+0x14], 0x100
-	mov dword [esp+0x10], 0x3f800000
-	mov dword [esp+0xc], 0x3d4ccccd
-	mov esi, 0x3d8f5c29
-	mov [esp+0x8], esi
-	mov edi, 0x3f30a3d7
-	mov [esp+0x4], edi
-	mov dword [esp], _cstring_g_scorescolor_en
-	call Cvar_RegisterColor
-	mov [g_ScoresColor_EnemyTeam], eax
-	mov dword [esp+0x18], _cstring_spectator_team_c
-	mov dword [esp+0x14], 0x100
-	mov dword [esp+0x10], 0x3f800000
-	mov [esp+0xc], ebx
-	mov [esp+0x8], ebx
-	mov [esp+0x4], ebx
-	mov dword [esp], _cstring_g_scorescolor_sp
-	call Cvar_RegisterColor
-	mov [g_ScoresColor_Spectator], eax
-	mov dword [esp+0x18], _cstring_free_team_color_
-	mov dword [esp+0x14], 0x100
-	mov dword [esp+0x10], 0x3f800000
-	mov dword [esp+0xc], 0x3dcccccd
-	mov dword [esp+0x8], 0x3f47ae14
-	mov dword [esp+0x4], 0x3f428f5c
-	mov dword [esp], _cstring_g_scorescolor_fr
-	call Cvar_RegisterColor
-	mov [g_ScoresColor_Free], eax
-	mov dword [esp+0x18], _cstring_allies_team_colo
-	mov dword [esp+0x14], 0x100
-	mov dword [esp+0x10], 0x3f800000
-	mov [esp+0xc], esi
-	mov dword [esp+0x8], 0x3eeb851f
-	mov dword [esp+0x4], 0x3db851ec
-	mov dword [esp], _cstring_g_scorescolor_al
-	call Cvar_RegisterColor
-	mov [g_ScoresColor_Allies], eax
-	mov dword [esp+0x18], _cstring_axis_team_color_
-	mov dword [esp+0x14], 0x100
-	mov dword [esp+0x10], 0x3f800000
-	mov dword [esp+0xc], 0x3d4ccccd
-	mov [esp+0x8], esi
-	mov [esp+0x4], edi
-	mov dword [esp], _cstring_g_scorescolor_ax
-	call Cvar_RegisterColor
-	mov [g_ScoresColor_Axis], eax
-	mov dword [esp+0xc], _cstring_allied_team_name
-	mov dword [esp+0x8], 0x100
-	mov dword [esp+0x4], _cstring_game_allies
-	mov dword [esp], _cstring_g_teamname_allie
-	call Cvar_RegisterString
-	mov [g_TeamName_Allies], eax
-	mov dword [esp+0xc], _cstring_axis_team_name
-	mov dword [esp+0x8], 0x100
-	mov dword [esp+0x4], _cstring_game_axis
-	mov dword [esp], _cstring_g_teamname_axis
-	call Cvar_RegisterString
-	mov [g_TeamName_Axis], eax
-	mov dword [esp+0x18], _cstring_allies_team_colo1
-	mov dword [esp+0x14], 0x100
-	mov dword [esp+0x10], 0x3f800000
-	mov [esp+0xc], edi
-	mov dword [esp+0x8], 0x3f23d70a
-	mov esi, 0x3f19999a
-	mov [esp+0x4], esi
-	mov dword [esp], _cstring_g_teamcolor_alli
-	call Cvar_RegisterColor
-	mov [g_TeamColor_Allies], eax
-	mov dword [esp+0x18], _cstring_axis_team_color
-	mov dword [esp+0x14], 0x100
-	mov dword [esp+0x10], 0x3f800000
-	mov dword [esp+0xc], 0x3ed1eb85
-	mov dword [esp+0x8], 0x3f11eb85
-	mov dword [esp+0x4], 0x3f266666
-	mov dword [esp], _cstring_g_teamcolor_axis
-	call Cvar_RegisterColor
-	mov [g_TeamColor_Axis], eax
-	mov dword [esp+0x18], _cstring_player_team_colo1
-	mov dword [esp+0x14], 0x100
-	mov dword [esp+0x10], 0x3f800000
-	mov dword [esp+0xc], 0x3f59999a
-	mov [esp+0x8], esi
-	mov dword [esp+0x4], 0x3ecccccd
-	mov dword [esp], _cstring_g_teamcolor_myte
-	call Cvar_RegisterColor
-	mov [g_TeamColor_MyTeam], eax
-	mov dword [esp+0x18], _cstring_enemy_team_color1
-	mov dword [esp+0x14], 0x100
-	mov dword [esp+0x10], 0x3f800000
-	mov [esp+0xc], ebx
-	mov [esp+0x8], ebx
-	mov esi, 0x3f400000
-	mov [esp+0x4], esi
-	mov dword [esp], _cstring_g_teamcolor_enem
-	call Cvar_RegisterColor
-	mov [g_TeamColor_EnemyTeam], eax
-	mov dword [esp+0x18], _cstring_spectator_team_c1
-	mov dword [esp+0x14], 0x100
-	mov dword [esp+0x10], 0x3f800000
-	mov [esp+0xc], ebx
-	mov [esp+0x8], ebx
-	mov [esp+0x4], ebx
-	mov dword [esp], _cstring_g_teamcolor_spec
-	call Cvar_RegisterColor
-	mov [g_TeamColor_Spectator], eax
-	mov dword [esp+0x18], _cstring_free_team_color
-	mov dword [esp+0x14], 0x100
-	mov dword [esp+0x10], 0x3f800000
-	mov [esp+0xc], ebx
-	mov [esp+0x8], ebx
-	mov [esp+0x4], esi
-	mov dword [esp], _cstring_g_teamcolor_free
-	call Cvar_RegisterColor
-	mov [g_TeamColor_Free], eax
-	mov dword [esp+0xc], _cstring_enable_extrapola
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x1
-	mov dword [esp], _cstring_g_smoothclients
-	call Cvar_RegisterBool
-	mov [g_smoothClients], eax
-	mov dword [esp+0xc], _cstring_turn_on_antilag_
-	mov dword [esp+0x8], 0x40
-	mov dword [esp+0x4], 0x1
-	mov dword [esp], _cstring_g_antilag
-	call Cvar_RegisterBool
-	mov [g_antilag], eax
-	mov dword [esp+0xc], _cstring_use_old_voting_m
-	mov dword [esp+0x8], 0x1
-	mov dword [esp+0x4], 0x1
-	mov dword [esp], _cstring_g_oldvoting
-	call Cvar_RegisterBool
-	mov [g_oldVoting], eax
-	mov dword [esp+0x14], _cstring_how_much_an_abst
-	mov dword [esp+0x10], 0x1
-	mov dword [esp+0xc], 0x3f800000
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x3f000000
-	mov dword [esp], _cstring_g_voteabstainwei
-	call Cvar_RegisterFloat
-	mov [g_voteAbstainWeight], eax
-	mov dword [esp+0xc], _cstring_turn_off_script_
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_g_no_script_spam
-	call Cvar_RegisterBool
-	mov [g_NoScriptSpam], eax
-	mov dword [esp+0xc], _cstring_turn_on_debuggin
-	mov dword [esp+0x8], 0x80
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_g_debuglocdamage
-	call Cvar_RegisterBool
-	mov [g_debugLocDamage], eax
-	mov dword [esp+0x14], _cstring_maximum_range_fo
-	mov dword [esp+0x10], 0x80
-	mov ebx, 0x466a6000
-	mov [esp+0xc], ebx
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x43800000
-	mov dword [esp], _cstring_g_friendlyfiredi
-	call Cvar_RegisterFloat
-	mov [g_friendlyfireDist], eax
-	mov dword [esp+0x14], _cstring_maximum_range_fo1
-	mov dword [esp+0x10], 0x80
-	mov [esp+0xc], ebx
-	mov dword [esp+0x8], 0x0
-	mov [esp+0x4], ebx
-	mov dword [esp], _cstring_g_friendlynamedi
-	call Cvar_RegisterFloat
-	mov [g_friendlyNameDist], eax
-	mov dword [esp+0xc], _cstring_turn_on_debug_li
-	mov dword [esp+0x8], 0x80
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_melee_debug
-	call Cvar_RegisterBool
-	mov [melee_debug], eax
-	mov dword [esp+0xc], _cstring_turn_on_debug_li1
-	mov dword [esp+0x8], 0x80
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_radius_damage_de
-	call Cvar_RegisterBool
-	mov [radius_damage_debug], eax
-	mov dword [esp+0x14], _cstring_the_radius_to_a_
-	mov dword [esp+0x10], 0x80
-	mov dword [esp+0xc], 0x7f7fffff
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x42b40000
-	mov dword [esp], _cstring_player_throwback
-	call Cvar_RegisterFloat
-	mov [player_throwbackInnerRadius], eax
-	mov dword [esp+0x14], _cstring_the_radius_playe
-	mov dword [esp+0x10], 0x80
-	mov dword [esp+0xc], 0x7f7fffff
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x43200000
-	mov dword [esp], _cstring_player_throwback1
-	call Cvar_RegisterFloat
-	mov [player_throwbackOuterRadius], eax
-	mov dword [esp+0x14], _cstring_the_radius_withi
-	mov dword [esp+0x10], 0x80
-	mov dword [esp+0xc], 0x7f7fffff
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x43000000
-	mov dword [esp], _cstring_player_mguseradi
-	call Cvar_RegisterFloat
-	mov [player_MGUseRadius], eax
-	mov dword [esp+0x14], _cstring_minimum_speed_at
-	mov dword [esp+0x10], 0x80
-	mov dword [esp+0xc], 0x7f7fffff
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x43c80000
-	mov dword [esp], _cstring_g_mingrenadedama
-	call Cvar_RegisterFloat
-	mov [g_minGrenadeDamageSpeed], eax
-	mov dword [esp+0xc], _cstring_whether_enemies_
-	mov dword [esp+0x8], 0x84
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_g_compassshowene
-	call Cvar_RegisterBool
-	mov [g_compassShowEnemies], eax
-	mov dword [esp+0xc], _cstring_print_a_message_
-	mov dword [esp+0x8], 0x80
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_pickupprints
-	call Cvar_RegisterBool
-	mov [pickupPrints], eax
-	mov dword [esp+0x14], _cstring_animation_debugg
-	mov dword [esp+0x10], 0x80
-	mov dword [esp+0xc], 0x3ff
-	mov dword [esp+0x8], 0xffffffff
-	mov dword [esp+0x4], 0xffffffff
-	mov dword [esp], _cstring_g_dumpanims
-	call Cvar_RegisterInt
-	mov [g_dumpAnims], eax
-	mov dword [esp+0x14], _cstring_time_to_hold_the
-	mov dword [esp+0x10], 0x0
-	mov dword [esp+0xc], 0x7fffffff
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_g_useholdtime
-	call Cvar_RegisterInt
-	mov [g_useholdtime], eax
-	mov dword [esp+0x14], _cstring_time_in_millisec
-	mov dword [esp+0x10], 0x81
-	mov dword [esp+0xc], 0x3e8
-	mov dword [esp+0x8], 0x0
-	mov eax, [_ZZ15G_RegisterDvarsvE28MY_DEFAULT_USEHOLDSPAWNDELAY]
-	mov [esp+0x4], eax
-	mov dword [esp], _cstring_g_useholdspawnde
-	call Cvar_RegisterInt
-	mov [g_useholdspawndelay], eax
-	mov dword [esp+0xc], _cstring_whether_red_cros
-	mov dword [esp+0x8], 0x21
-	mov dword [esp+0x4], 0x1
-	mov dword [esp], _cstring_g_redcrosshairs
-	call Cvar_RegisterBool
-	mov [g_redCrosshairs], eax
-	mov dword [esp+0x14], _cstring_time_that_the_cl
-	mov dword [esp+0x10], 0x80
-	mov dword [esp+0xc], 0xea60
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x1f4
-	mov dword [esp], _cstring_g_mantleblocktim
-	call Cvar_RegisterInt
-	mov [g_mantleBlockTimeBuffer], eax
-	call Helicopter_RegisterDvars
-	call G_VehRegisterDvars
-	call G_RegisterMissileDvars
-	call G_RegisterMissileDebugDvars
-	call BG_RegisterDvars
-	mov dword [esp+0x18], _cstring_fog_color_that_w
-	mov dword [esp+0x14], 0x10c0
-	mov dword [esp+0x10], 0x3f800000
-	mov dword [esp+0xc], 0x0
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x3f800000
-	mov dword [esp], _cstring_g_fogcolorreadon
-	call Cvar_RegisterColor
-	mov [g_fogColorReadOnly], eax
-	mov dword [esp+0x14], _cstring_fog_start_distan
-	mov dword [esp+0x10], 0x10c0
-	mov dword [esp+0xc], 0x7f7fffff
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x0
-	mov dword [esp], _cstring_g_fogstartdistre
-	call Cvar_RegisterFloat
-	mov [g_fogStartDistReadOnly], eax
-	mov dword [esp+0x14], _cstring_fog_start_distan
-	mov dword [esp+0x10], 0x10c0
-	mov dword [esp+0xc], 0x7f7fffff
-	mov dword [esp+0x8], 0x0
-	mov dword [esp+0x4], 0x3dcccccd
-	mov dword [esp], _cstring_g_foghalfdistrea
-	call Cvar_RegisterFloat
-	mov [g_fogHalfDistReadOnly], eax
-	add esp, 0x2c
-	pop ebx
-	pop esi
-	pop edi
-	pop ebp
-	ret
-	nop
-
-
 ;G_CreateDObj(DObjModel_s*, unsigned short, XAnimTree_s*, int, int, clientInfo_t*)
 G_CreateDObj:
 	push ebp
@@ -904,7 +291,7 @@ G_GetDObj:
 
 
 ;G_SafeDObjFree(int, int)
-G_SafeDObjFree:
+_Z14G_SafeDObjFreeii:
 	push ebp
 	mov ebp, esp
 	pop ebp
@@ -1258,7 +645,7 @@ ShowEntityInfo_50:
 	jmp ShowEntityInfo_60
 
 
-;G_InitGame(int, int, int, int)
+;G_InitGame(int, int, int, int, int)
 G_InitGame:
 	push ebp
 	mov ebp, esp
@@ -1301,7 +688,7 @@ G_InitGame:
 	jz G_InitGame_10
 	mov eax, [ebp+0x14]
 	test eax, eax
-	jz G_InitGame_10
+	jnz G_InitGame_10		;Inverted registerDvars - Now it is like in BlackOps
 G_InitGame_110:
 	mov dword [esp], _cstring_sv_cheats
 	call Cvar_VariableBooleanValue
@@ -1311,36 +698,18 @@ G_InitGame_110:
 	test eax, eax
 	jz G_InitGame_30
 G_InitGame_20:
-	call G_ProcessIPBans
 	mov eax, SV_XModelGet
 	mov [level_bgs+0x999ec], eax
-	mov dword [level_bgs+0x999f0], 0x126fb6
+	mov dword [level_bgs+0x999f0], G_CreateDObj
 	mov dword [level_bgs+0x999f4], 0x0
-	mov dword [level_bgs+0x999f8], 0x126fe0
-	mov dword [level_bgs+0x999fc], 0x126fea
-	mov dword [level_bgs+0x99a00], 0x126ff4
+	mov dword [level_bgs+0x999f8], G_GetDObj
+	mov dword [level_bgs+0x999fc], G_SafeServerDObjFree
+	mov dword [level_bgs+0x99a00], Hunk_AllocXAnimServer
 	mov dword [level_bgs+0x999e8], 0x1
-	mov eax, [g_log]
-	mov edx, [eax+0xc]
-	cmp byte [edx], 0x0
-	jz G_InitGame_40
-	mov eax, [g_logSync]
-	cmp byte [eax+0xc], 0x0
-	jz G_InitGame_50
-	mov dword [esp+0x8], 0x3
-	mov dword [esp+0x4], level+0x18
-	mov [esp], edx
-	call FS_FOpenFileByMode
-	mov eax, [level+0x18]
-	test eax, eax
-	jnz G_InitGame_60
-G_InitGame_120:
-	mov eax, [g_log]
-	mov eax, [eax+0xc]
-	mov [esp+0x8], eax
-	mov dword [esp+0x4], _cstring_warning_couldnt_
-	mov dword [esp], 0xf
-	call Com_PrintWarning
+	call G_OpenLogFile
+	mov eax, [ebp+0x18]
+	mov [esp], eax
+	call G_InitSomeVariables
 G_InitGame_130:
 	mov dword [level+0x2df4], 0x0
 	mov dword [level+0x2df8], 0x0
@@ -1451,32 +820,8 @@ G_InitGame_100:
 	pop ebp
 	ret
 G_InitGame_10:
-	call G_RegisterDvars
+	call G_RegisterCvars
 	jmp G_InitGame_110
-G_InitGame_50:
-	mov dword [esp+0x8], 0x2
-	mov dword [esp+0x4], level+0x18
-	mov [esp], edx
-	call FS_FOpenFileByMode
-	mov eax, [level+0x18]
-	test eax, eax
-	jz G_InitGame_120
-G_InitGame_60:
-	mov dword [esp+0x4], 0x400
-	lea ebx, [ebp-0x818]
-	mov [esp], ebx
-	call SV_GetServerinfo
-	mov dword [esp], _cstring_1
-	call G_LogPrintf
-	mov [esp+0x4], ebx
-	mov dword [esp], _cstring_initgame_s
-	call G_LogPrintf
-	jmp G_InitGame_130
-G_InitGame_40:
-	mov dword [esp+0x4], _cstring_not_logging_to_d
-	mov dword [esp], 0xf
-	call Com_Printf
-	jmp G_InitGame_130
 G_InitGame_70:
 	mov dword [esp+0x8], 0x999cc
 	mov dword [esp+0x4], 0x0
@@ -2141,88 +1486,6 @@ G_RunThink_20:
 	add [eax], al
 
 
-;G_LogPrintf(char const*, ...)
-G_LogPrintf:
-	push ebp
-	mov ebp, esp
-	push edi
-	push esi
-	push ebx
-	sub esp, 0x83c
-	mov edx, [level+0x18]
-	test edx, edx
-	jz G_LogPrintf_10
-	lea eax, [ebp+0xc]
-	mov [ebp-0x1c], eax
-	mov [esp+0xc], eax
-	mov eax, [ebp+0x8]
-	mov [esp+0x8], eax
-	mov dword [esp+0x4], 0x400
-	lea ebx, [ebp-0x81c]
-	mov [esp], ebx
-	call vsnprintf
-	mov ecx, [level+0x1ec]
-	mov esi, 0x10624dd3
-	mov eax, ecx
-	imul esi
-	mov esi, edx
-	sar esi, 0x6
-	mov eax, ecx
-	sar eax, 0x1f
-	sub esi, eax
-	mov ecx, 0x88888889
-	mov eax, ecx
-	imul esi
-	lea edi, [edx+esi]
-	sar edi, 0x5
-	mov eax, esi
-	sar eax, 0x1f
-	sub edi, eax
-	lea ecx, [edi*4]
-	mov eax, edi
-	shl eax, 0x6
-	sub eax, ecx
-	sub esi, eax
-	mov eax, 0x66666667
-	imul esi
-	mov ecx, edx
-	sar ecx, 0x2
-	mov eax, esi
-	sar eax, 0x1f
-	sub ecx, eax
-	mov [esp+0x18], ebx
-	lea eax, [ecx+ecx*4]
-	add eax, eax
-	sub esi, eax
-	mov [esp+0x14], esi
-	mov [esp+0x10], ecx
-	mov [esp+0xc], edi
-	mov dword [esp+0x8], _cstring_3iii_s
-	mov dword [esp+0x4], 0x400
-	lea ebx, [ebp-0x41c]
-	mov [esp], ebx
-	call Com_sprintf
-	mov eax, [level+0x18]
-	mov [esp+0x8], eax
-	cld
-	mov ecx, 0xffffffff
-	xor eax, eax
-	mov edi, ebx
-	repne scasb
-	not ecx
-	sub ecx, 0x1
-	mov [esp+0x4], ecx
-	mov [esp], ebx
-	call FS_Write
-G_LogPrintf_10:
-	add esp, 0x83c
-	pop ebx
-	pop esi
-	pop edi
-	pop ebp
-	ret
-	nop
-
 
 ;G_SightTrace(int*, float const*, float const*, int, int)
 G_SightTrace:
@@ -2306,9 +1569,7 @@ G_ShutdownGame:
 	mov dword [esp+0x4], _cstring__shutdowngame_d_
 	mov dword [esp], 0xf
 	call Com_Printf
-	mov eax, [level+0x18]
-	test eax, eax
-	jnz G_ShutdownGame_10
+	call G_CloseLogFile
 G_ShutdownGame_130:
 	mov eax, bgs
 	mov dword [eax], 0x0
@@ -2388,15 +1649,6 @@ G_ShutdownGame_50:
 	mov dword [esp], g_entities+0x9cb18
 	call G_FreeEntity
 	jmp G_ShutdownGame_120
-G_ShutdownGame_10:
-	mov dword [esp], _cstring_shutdowngame
-	call G_LogPrintf
-	mov dword [esp], _cstring_1
-	call G_LogPrintf
-	mov eax, [level+0x18]
-	mov [esp], eax
-	call FS_FCloseFile
-	jmp G_ShutdownGame_130
 G_ShutdownGame_110:
 	mov [esp], eax
 	call FS_FCloseFile
@@ -2453,48 +1705,6 @@ G_ShutdownGame_80:
 	jmp G_ShutdownGame_70
 
 
-;G_TraceCapsule(trace_t*, float const*, float const*, float const*, float const*, int, int)
-G_TraceCapsule:
-	push ebp
-	mov ebp, esp
-	push ebx
-	sub esp, 0x44
-	mov eax, [ebp+0x1c]
-	mov [esp+0x4], eax
-	lea ebx, [ebp-0x14]
-	mov [esp], ebx
-	call SV_SetupIgnoreEntParams
-	mov dword [esp+0x24], 0x0
-	mov dword [esp+0x20], 0x0
-	mov dword [esp+0x1c], 0x0
-	mov eax, [ebp+0x20]
-	mov [esp+0x18], eax
-	mov [esp+0x14], ebx
-	mov eax, [ebp+0x18]
-	mov [esp+0x10], eax
-	mov eax, [ebp+0x14]
-	mov [esp+0xc], eax
-	mov eax, [ebp+0x10]
-	mov [esp+0x8], eax
-	mov eax, [ebp+0xc]
-	mov [esp+0x4], eax
-	mov eax, [ebp+0x8]
-	mov [esp], eax
-	call SV_Trace
-	add esp, 0x44
-	pop ebx
-	pop ebp
-	ret
-	nop
-
-
-;G_GetClientSize()
-G_GetClientSize:
-	push ebp
-	mov ebp, esp
-	mov eax, 0x3184
-	pop ebp
-	ret
 
 
 ;G_AddDebugString(float const*, float const*, float, char const*, int)
@@ -2538,64 +1748,6 @@ G_GetClientScore:
 	ret
 
 
-;G_GetClientState(int)
-G_GetClientState:
-	push ebp
-	mov ebp, esp
-	mov ecx, [ebp+0x8]
-	lea eax, [ecx+ecx*2]
-	mov edx, eax
-	shl edx, 0x6
-	add eax, edx
-	mov edx, eax
-	shl edx, 0x6
-	add eax, edx
-	add eax, ecx
-	add eax, [level]
-	add eax, 0x300c
-	pop ebp
-	ret
-
-
-;G_GetPlayerState(int)
-G_GetPlayerState:
-	push ebp
-	mov ebp, esp
-	mov ecx, [ebp+0x8]
-	lea eax, [ecx+ecx*2]
-	mov edx, eax
-	shl edx, 0x6
-	add eax, edx
-	mov edx, eax
-	shl edx, 0x6
-	add eax, edx
-	add eax, ecx
-	add eax, [level]
-	pop ebp
-	ret
-	nop
-
-
-;G_GetSavePersist()
-G_GetSavePersist:
-	push ebp
-	mov ebp, esp
-	mov eax, [level+0x1540]
-	pop ebp
-	ret
-
-
-;G_SetSavePersist(int)
-G_SetSavePersist:
-	push ebp
-	mov ebp, esp
-	mov eax, [ebp+0x8]
-	mov [level+0x1540], eax
-	pop ebp
-	ret
-	nop
-
-
 ;G_LocationalTrace(trace_t*, float const*, float const*, int, int, unsigned char*)
 G_LocationalTrace:
 	push ebp
@@ -2637,56 +1789,6 @@ Hunk_AllocXAnimServer:
 	mov ebp, esp
 	pop ebp
 	jmp Hunk_AllocLowInternal
-	nop
-
-
-;G_GetClientArchiveTime(int)
-G_GetClientArchiveTime:
-	push ebp
-	mov ebp, esp
-	mov ecx, [ebp+0x8]
-	lea eax, [ecx+ecx*2]
-	mov edx, eax
-	shl edx, 0x6
-	add eax, edx
-	mov edx, eax
-	shl edx, 0x6
-	add eax, edx
-	add eax, ecx
-	mov edx, [level]
-	mov eax, [eax+edx+0x2f74]
-	pop ebp
-	ret
-
-
-;G_GetFogOpaqueDistSqrd()
-G_GetFogOpaqueDistSqrd:
-	push ebp
-	mov ebp, esp
-	fld dword [level+0x15c8]
-	pop ebp
-	ret
-	nop
-
-
-;G_SetClientArchiveTime(int, int)
-G_SetClientArchiveTime:
-	push ebp
-	mov ebp, esp
-	mov ecx, [ebp+0x8]
-	lea eax, [ecx+ecx*2]
-	mov edx, eax
-	shl edx, 0x6
-	add eax, edx
-	mov edx, eax
-	shl edx, 0x6
-	add eax, edx
-	add eax, ecx
-	mov ecx, [ebp+0xc]
-	mov edx, [level]
-	mov [eax+edx+0x2f74], ecx
-	pop ebp
-	ret
 	nop
 
 
@@ -2872,83 +1974,14 @@ CheckVote_20:
 	mov dword [esp+0x4], level+0x320
 	mov dword [esp], _cstring_s
 	call va
-	mov [esp+0x4], eax
-	mov dword [esp], 0x0
+	mov [esp], eax
 	call Cbuf_AddText
 	jmp CheckVote_10
-
-
-;ExitLevel()
-ExitLevel:
-	push ebp
-	mov ebp, esp
-	push ebx
-	sub esp, 0x14
-	mov dword [esp+0x4], _cstring_map_rotate
-	mov dword [esp], 0x0
-	call Cbuf_AddText
-	mov dword [level+0x200], 0x0
-	mov dword [level+0x204], 0x0
-	mov ebx, [g_maxclients]
-	mov eax, [ebx+0xc]
-	test eax, eax
-	jle ExitLevel_10
-	xor ecx, ecx
-	xor edx, edx
-	jmp ExitLevel_20
-ExitLevel_40:
-	add ecx, 0x1
-	add edx, 0x3184
-	cmp ecx, [ebx+0xc]
-	jge ExitLevel_30
-ExitLevel_20:
-	mov eax, edx
-	add eax, [level]
-	cmp dword [eax+0x2f8c], 0x2
-	jnz ExitLevel_40
-	mov dword [eax+0x2f78], 0x0
-	mov ebx, [g_maxclients]
-	add ecx, 0x1
-	add edx, 0x3184
-	cmp ecx, [ebx+0xc]
-	jl ExitLevel_20
-ExitLevel_30:
-	mov ecx, [ebx+0xc]
-	test ecx, ecx
-	jle ExitLevel_10
-	xor ecx, ecx
-	xor edx, edx
-	jmp ExitLevel_50
-ExitLevel_60:
-	add ecx, 0x1
-	add edx, 0x3184
-	cmp ecx, [ebx+0xc]
-	jge ExitLevel_10
-ExitLevel_50:
-	mov eax, edx
-	add eax, [level]
-	cmp dword [eax+0x2f8c], 0x2
-	jnz ExitLevel_60
-	mov dword [eax+0x2f8c], 0x1
-	mov ebx, [g_maxclients]
-	add ecx, 0x1
-	add edx, 0x3184
-	cmp ecx, [ebx+0xc]
-	jl ExitLevel_50
-ExitLevel_10:
-	mov dword [esp], _cstring_exitlevel_execut
-	call G_LogPrintf
-	add esp, 0x14
-	pop ebx
-	pop ebp
-	ret
-	nop
 
 
 ;Initialized global or static variables of g_main_mp:
 SECTION .data
 g_entinfoNames: dd _cstring_off, _cstring_all_ents, 0x0
-_ZZ15G_RegisterDvarsvE28MY_DEFAULT_USEHOLDSPAWNDELAY: dd 0x1f4, 0x0, 0x0, 0x0, 0x0
 entityHandlers: dd 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, Touch_Multi, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, hurt_use, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, hurt_touch, hurt_use, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, Use_trigger_damage, Pain_trigger_damage, Die_trigger_damage, 0x0, 0x0, 0x0, 0x0, Reached_ScriptMover, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, Reached_ScriptMover, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, G_ExplodeMissile, 0x0, 0x0, Touch_Item_Auto, 0x0, 0x0, 0x0, 0x0, 0x3, 0x4, G_TimedObjectThink, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, G_ExplodeMissile, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x5, 0x6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, player_die, G_PlayerController, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, player_die, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, G_PlayerController, 0x0, 0x0, BodyEnd, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, turret_think_init, 0x0, 0x0, 0x0, turret_use, 0x0, 0x0, turret_controller, 0x0, 0x0, turret_think, 0x0, 0x0, 0x0, turret_use, 0x0, 0x0, turret_controller, 0x0, 0x0, DroppedItemClearOwner, 0x0, 0x0, Touch_Item_Auto, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, FinishSpawningItem, 0x0, 0x0, Touch_Item_Auto, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, Touch_Item_Auto, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, use_trigger_use, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, Reached_ScriptMover, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, G_FreeEntity, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, G_VehEntHandler_Think, 0x0, 0x0, G_VehEntHandler_Touch, G_VehEntHandler_Use, G_VehEntHandler_Pain, G_VehEntHandler_Die, G_VehEntHandler_Controller, 0x0, 0x0, Helicopter_Think, 0x0, 0x0, 0x0, 0x0, Helicopter_Pain, Helicopter_Die, Helicopter_Controller, 0x0, 0x0
 
 
@@ -2963,7 +1996,6 @@ g_compassShowEnemies: resb 0x4
 bullet_penetrationEnabled: resb 0x4
 g_debugLocDamage: resb 0x4
 g_entities: resb 0x9d000
-level: resb 0x2ea0
 g_dropForwardSpeed: resb 0x4
 g_dropHorzSpeedRand: resb 0x4
 g_dropUpSpeedBase: resb 0x4
@@ -3001,7 +2033,6 @@ g_voiceChatTalkingDuration: resb 0x4
 g_inactivity: resb 0x4
 g_mantleBlockTimeBuffer: resb 0x4
 g_playerCollisionEjectSpeed: resb 0x4
-g_smoothClients: resb 0x8
 g_speed: resb 0x4
 g_synchronousClients: resb 0x4
 g_ScoresColor_Allies: resb 0x4
@@ -3157,7 +2188,6 @@ _cstring_g_teamcolor_spec:		db "g_TeamColor_Spectator",0
 _cstring_free_team_color:		db "Free Team color",0
 _cstring_g_teamcolor_free:		db "g_TeamColor_Free",0
 _cstring_enable_extrapola:		db "Enable extrapolation between client states",0
-_cstring_g_smoothclients:		db "g_smoothClients",0
 _cstring_turn_on_antilag_:		db "Turn on antilag checks for weapon hits",0
 _cstring_g_antilag:		db "g_antilag",0
 _cstring_use_old_voting_m:		db "Use old voting method",0

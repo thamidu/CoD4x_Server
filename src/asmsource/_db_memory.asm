@@ -26,9 +26,6 @@
 	global DB_EnumXAssets
 	global DB_GetAllXAssetOfType_LoadObj
 	global DB_GetAllXAssetOfType
-	global g_block_mem_name
-	global g_block_mem_type
-	global DB_AllocXZoneMemory
 	global DB_FinishGeometryBlocks
 	global DB_RecoverGeometryBuffers
 	global DB_ReleaseGeometryBuffers
@@ -238,126 +235,6 @@ DB_GetAllXAssetOfType_10:
 	jmp ecx
 
 
-;DB_AllocXZoneMemory(unsigned int*, char const*, XZoneMemory*, unsigned int)
-DB_AllocXZoneMemory:
-	push ebp
-	mov ebp, esp
-	push edi
-	push esi
-	push ebx
-	sub esp, 0x3c
-	mov dword [ebp-0x24], 0x0
-	mov dword [ebp-0x20], g_block_mem_name
-	mov dword [ebp-0x1c], g_block_mem_type
-	mov esi, [ebp+0x10]
-DB_AllocXZoneMemory_40:
-	mov eax, [ebp-0x24]
-	mov edx, [ebp+0x8]
-	mov ebx, [edx+eax*4]
-	test ebx, ebx
-	jz DB_AllocXZoneMemory_10
-	mov eax, [ebp-0x1c]
-	cmp dword [eax], 0x1
-	ja DB_AllocXZoneMemory_20
-	mov edx, [ebp+0x14]
-	mov [esp+0xc], edx
-	mov dword [esp+0x8], 0x4
-	mov dword [esp+0x4], 0x1000
-	lea eax, [ebx+0xf]
-	mov [esp], eax
-	call PMem_Alloc
-	mov edi, eax
-	test edi, edi
-	jz DB_AllocXZoneMemory_30
-DB_AllocXZoneMemory_70:
-	mov [esi+0x4], ebx
-	mov [esi], edi
-DB_AllocXZoneMemory_10:
-	add dword [ebp-0x24], 0x1
-	add esi, 0x8
-	add dword [ebp-0x20], 0x4
-	add dword [ebp-0x1c], 0x4
-	cmp dword [ebp-0x24], 0x9
-	jnz DB_AllocXZoneMemory_40
-	mov edx, [ebp+0x10]
-	mov eax, [edx+0x3c]
-	test eax, eax
-	jnz DB_AllocXZoneMemory_50
-DB_AllocXZoneMemory_90:
-	mov eax, [edx+0x44]
-	test eax, eax
-	jz DB_AllocXZoneMemory_60
-	mov dword [esp+0x8], _cstring_db_allocxzonemem
-	mov [esp+0x4], eax
-	mov eax, edx
-	add eax, 0x54
-	mov [esp], eax
-	call R_AllocStaticIndexBuffer
-	mov edx, [ebp+0x10]
-	mov [edx+0x4c], eax
-DB_AllocXZoneMemory_60:
-	add esp, 0x3c
-	pop ebx
-	pop esi
-	pop edi
-	pop ebp
-	ret
-DB_AllocXZoneMemory_20:
-	mov eax, [ebp+0x14]
-	mov [esp+0xc], eax
-	mov dword [esp+0x8], 0x404
-	mov dword [esp+0x4], 0x1000
-	mov [esp], ebx
-	call PMem_Alloc
-	mov edi, eax
-	test edi, edi
-	jnz DB_AllocXZoneMemory_70
-DB_AllocXZoneMemory_30:
-	call PMem_GetOverAllocatedSize
-	cvtsi2ss xmm0, eax
-	movss xmm1, dword [_float_0_00000095]
-	mulss xmm0, xmm1
-	cvtss2sd xmm0, xmm0
-	movsd [esp+0x18], xmm0
-	mov edx, [ebp+0xc]
-	mov [esp+0x14], edx
-	mov edx, [ebp-0x20]
-	mov eax, [edx]
-	mov [esp+0x10], eax
-	test ebx, ebx
-	js DB_AllocXZoneMemory_80
-	cvtsi2ss xmm0, ebx
-DB_AllocXZoneMemory_100:
-	mulss xmm0, xmm1
-	cvtss2sd xmm0, xmm0
-	movsd [esp+0x8], xmm0
-	mov dword [esp+0x4], _cstring_could_not_alloca
-	mov dword [esp], 0x2
-	call Com_Error
-	jmp DB_AllocXZoneMemory_70
-DB_AllocXZoneMemory_50:
-	mov dword [esp+0x8], _cstring_db_allocxzonemem
-	mov [esp+0x4], eax
-	mov eax, edx
-	add eax, 0x50
-	mov [esp], eax
-	call R_AllocStaticVertexBuffer
-	mov edx, [ebp+0x10]
-	mov [edx+0x48], eax
-	mov edx, [ebp+0x10]
-	jmp DB_AllocXZoneMemory_90
-DB_AllocXZoneMemory_80:
-	mov eax, ebx
-	shr eax, 1
-	mov edx, ebx
-	and edx, 0x1
-	or eax, edx
-	cvtsi2ss xmm0, eax
-	addss xmm0, xmm0
-	jmp DB_AllocXZoneMemory_100
-	nop
-
-
 ;DB_FinishGeometryBlocks(XZoneMemory*)
 DB_FinishGeometryBlocks:
 	push ebp
@@ -516,9 +393,6 @@ SECTION .bss
 
 ;Initialized global or static variables of db_memory:
 SECTION .data
-g_block_mem_name: dd _cstring_temp, _cstring_runtime, _cstring_large_runtime, _cstring_physical_runtime, _cstring_virtual, _cstring_large, _cstring_physical, _cstring_vertex, _cstring_index, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0
-g_block_mem_type: dd 0x0, 0x1, 0x1, 0x2, 0x1, 0x1, 0x2, 0x2, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0
-
 
 ;Initialized constant data of db_memory:
 SECTION .rdata
@@ -528,15 +402,6 @@ SECTION .rdata
 SECTION .rdata
 _cstring_db_allocxzonemem:		db "DB_AllocXZoneMemory",0
 _cstring_could_not_alloca:		db "Could not allocate %.2f MB of type ",27h,"%s",27h," for zone ",27h,"%s",27h," needed an additional %.2f MB",0
-_cstring_temp:		db "temp",0
-_cstring_runtime:		db "runtime",0
-_cstring_large_runtime:		db "large_runtime",0
-_cstring_physical_runtime:		db "physical_runtime",0
-_cstring_virtual:		db "virtual",0
-_cstring_large:		db "large",0
-_cstring_physical:		db "physical",0
-_cstring_vertex:		db "vertex",0
-_cstring_index:		db "index",0
 
 
 

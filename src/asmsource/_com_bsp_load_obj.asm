@@ -1,5 +1,5 @@
 ;Imports of com_bsp_load_obj:
-	extern DB_FindXAssetHeader
+	extern DB_FindXAssetHeaderReal
 	extern comWorld
 	extern Hunk_AllocInternal
 	extern strcmp
@@ -48,7 +48,7 @@ Com_LoadWorld_FastFile:
 	mov eax, [ebp+0x8]
 	mov [esp+0x4], eax
 	mov dword [esp], 0xc
-	call DB_FindXAssetHeader
+	call DB_FindXAssetHeaderReal
 	leave
 	ret
 	nop
@@ -777,5 +777,6 @@ SECTION .rdata
 _float_0_75000000:		dd 0x3f400000	; 0.75
 _float_0_25000000:		dd 0x3e800000	; 0.25
 _float_1_00000000:		dd 0x3f800000	; 1
-_data16_80000000:		dd 0x80000000, 0x0, 0x0, 0x0	; OWORD
 
+align   16,db 0
+_data16_80000000:		dd 0x80000000, 0x0, 0x0, 0x0	; DQWORD

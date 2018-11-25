@@ -1,6 +1,6 @@
 ;Imports of scr_yacc:
 	extern malloc
-	extern fprintf
+	extern Scr_YYACError
 	extern exit
 	extern memcpy
 	extern CompileError
@@ -19,7 +19,7 @@
 	extern node3
 	extern node1
 	extern node6
-	extern scrCompilePub
+	extern gScrCompilePub
 	extern node1_
 	extern node4
 	extern SL_GetString_
@@ -27,7 +27,9 @@
 	extern node7
 	extern Scr_ScanFile
 	extern realloc
-
+	extern yy_create_buffer
+	extern yy_stdin
+	extern yy_stdout
 ;Exports of scr_yacc:
 	global yaccResult
 	global yy_start
@@ -61,7 +63,6 @@
 	global yy_accept
 	global yy_ec
 	global ScriptParse
-	global yy_create_buffer
 	global yyparse
 	global yychar
 	global yyin
@@ -119,73 +120,6 @@ ScriptParse_10:
 	mov byte [yy_hold_char], 0x0
 	jmp ScriptParse_20
 	add [eax], al
-
-
-;yy_create_buffer(__sFILE*, int)
-yy_create_buffer:
-	push ebp
-	mov ebp, esp
-	push esi
-	push ebx
-	sub esp, 0x10
-	mov esi, [ebp+0xc]
-	mov dword [esp], 0x28
-	call malloc
-	mov ebx, eax
-	test eax, eax
-	jz yy_create_buffer_10
-	mov [eax+0xc], esi
-	lea eax, [esi+0x2]
-	mov [esp], eax
-	call malloc
-	mov [ebx+0x4], eax
-	test eax, eax
-	jz yy_create_buffer_10
-	mov dword [ebx+0x14], 0x1
-	mov dword [ebx+0x10], 0x0
-	mov byte [eax], 0x0
-	mov byte [eax+0x1], 0x0
-	mov [ebx+0x8], eax
-	mov dword [ebx+0x1c], 0x1
-	mov dword [ebx+0x24], 0x0
-	cmp ebx, [yy_current_buffer]
-	jz yy_create_buffer_20
-	mov eax, [ebp+0x8]
-	mov [ebx], eax
-	mov dword [ebx+0x20], 0x1
-	mov dword [ebx+0x18], 0x0
-	mov eax, ebx
-	add esp, 0x10
-	pop ebx
-	pop esi
-	pop ebp
-	ret
-yy_create_buffer_20:
-	mov dword [yy_n_chars], 0x0
-	mov [yy_c_buf_p], eax
-	mov [yytext], eax
-	mov eax, [ebx]
-	mov [yyin], eax
-	mov byte [yy_hold_char], 0x0
-	mov eax, [ebp+0x8]
-	mov [ebx], eax
-	mov dword [ebx+0x20], 0x1
-	mov dword [ebx+0x18], 0x0
-	mov eax, ebx
-	add esp, 0x10
-	pop ebx
-	pop esi
-	pop ebp
-	ret
-yy_create_buffer_10:
-	mov dword [esp+0x8], _cstring_out_of_dynamic_m
-	mov dword [esp+0x4], _cstring_s
-	mov eax, [0xd5cc920]
-	add eax, 0xb0
-	mov [esp], eax
-	call fprintf
-	mov dword [esp], 0x2
-	call exit
 
 
 ;yyparse()
@@ -542,13 +476,10 @@ yyparse_70:
 	xor ecx, ecx
 	jmp yyparse_250
 yyparse_380:
-	mov dword [esp+0x8], _cstring_fatal_flex_scann
+	mov dword [esp+0x4], _cstring_fatal_flex_scann
 yyparse_810:
-	mov dword [esp+0x4], _cstring_s
-	mov eax, [0xd5cc920]
-	add eax, 0xb0
-	mov [esp], eax
-	call fprintf
+	mov dword [esp], _cstring_s
+	call Scr_YYACError
 	mov dword [esp], 0x2
 	call exit
 yyparse_100:
@@ -593,7 +524,7 @@ yyparse_230:
 	mov [ebp-0x2854], edx
 	jmp yyparse_180
 yyparse_300:
-	mov eax, [0xd5cc920]
+	call yy_stdin
 	mov [yyin], eax
 	jmp yyparse_410
 yyparse_400:
@@ -1152,7 +1083,7 @@ yyparse_3330:
 	mov edx, [yyleng]
 	add eax, edx
 	mov [g_out_pos], eax
-	mov dword [esp+0xc], 0xe
+	mov dword [esp+0xc], 14
 	add edx, 0x1
 	mov [esp+0x8], edx
 	mov dword [esp+0x4], 0x0
@@ -1169,7 +1100,7 @@ yyparse_3320:
 	mov edx, [yyleng]
 	add eax, edx
 	mov [g_out_pos], eax
-	mov dword [esp+0xc], 0xe
+	mov dword [esp+0xc], 14
 	add edx, 0x1
 	mov [esp+0x8], edx
 	mov dword [esp+0x4], 0x0
@@ -1323,7 +1254,7 @@ yyparse_2300:
 	mov edi, [ebp-0x2810]
 	jmp yyparse_420
 yyparse_2290:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov edi, [ebp-0x2848]
@@ -1360,7 +1291,7 @@ yyparse_1160:
 	mov edi, [ebp-0x2810]
 	jmp yyparse_420
 yyparse_2270:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov edx, [ebp-0x2848]
@@ -1390,7 +1321,7 @@ yyparse_2270:
 	mov edi, [ebp-0x2810]
 	jmp yyparse_420
 yyparse_2260:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov edx, [ebp-0x2848]
@@ -1588,7 +1519,7 @@ yyparse_2360:
 yyparse_2350:
 	mov esi, [ebp-0x2848]
 	sub esi, 0x30
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov edx, [ebp-0x2848]
@@ -1689,7 +1620,7 @@ yyparse_2410:
 	mov dword [esp], 0x56
 	call node2
 	mov [ebp-0x280c], eax
-	mov eax, scrCompilePub
+	mov eax, gScrCompilePub
 	add dword [eax+0x4], 0x1
 	mov ebx, [ebp-0x280c]
 	mov edi, [ebp-0x2810]
@@ -2068,7 +1999,7 @@ yyparse_1500:
 	mov edi, [ebp-0x2810]
 	jmp yyparse_420
 yyparse_1490:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov ebx, [ebp-0x2848]
@@ -2089,7 +2020,7 @@ yyparse_1490:
 	mov edi, [ebp-0x2810]
 	jmp yyparse_420
 yyparse_1480:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov edi, [ebp-0x2848]
@@ -2110,13 +2041,13 @@ yyparse_1480:
 	mov [ebp-0x280c], eax
 	mov ecx, [edi-0x4]
 	mov [ebp-0x2810], ecx
-	mov eax, scrCompilePub
+	mov eax, gScrCompilePub
 	add dword [eax+0x4], 0x1
 	mov ebx, [ebp-0x280c]
 	mov edi, ecx
 	jmp yyparse_420
 yyparse_1470:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov ecx, [ebp-0x2848]
@@ -2138,7 +2069,7 @@ yyparse_1470:
 	mov edi, [ebp-0x2810]
 	jmp yyparse_420
 yyparse_1460:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov edi, [ebp-0x2848]
@@ -2157,13 +2088,13 @@ yyparse_1460:
 	mov dword [esp], 0x15
 	call node3
 	mov [ebp-0x280c], eax
-	mov eax, scrCompilePub
+	mov eax, gScrCompilePub
 	add dword [eax+0x4], 0x1
 	mov ebx, [ebp-0x280c]
 	mov edi, [ebp-0x2810]
 	jmp yyparse_420
 yyparse_1450:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov ebx, [ebp-0x2848]
@@ -2176,7 +2107,7 @@ yyparse_1450:
 	mov edi, [ebp-0x2810]
 	jmp yyparse_420
 yyparse_1440:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov edx, [ebp-0x2848]
@@ -2370,7 +2301,7 @@ yyparse_1820:
 	mov edi, ecx
 	jmp yyparse_420
 yyparse_1810:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov edx, [ebp-0x2848]
@@ -2393,7 +2324,7 @@ yyparse_1810:
 	mov edi, [ebp-0x2810]
 	jmp yyparse_420
 yyparse_1800:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov edi, [ebp-0x2848]
@@ -2441,7 +2372,7 @@ yyparse_1790:
 	mov edi, [ebp-0x2810]
 	jmp yyparse_420
 yyparse_1780:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov ecx, [ebp-0x2848]
@@ -2519,7 +2450,7 @@ yyparse_1740:
 	mov edi, [ebp-0x2810]
 	jmp yyparse_420
 yyparse_1730:
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov ecx, [ebp-0x2848]
@@ -3077,7 +3008,7 @@ yyparse_2490:
 	mov eax, esi
 yyparse_690:
 	mov byte [eax], 0x0
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov [esp], esi
@@ -3103,7 +3034,7 @@ yyparse_2480:
 	mov eax, esi
 yyparse_610:
 	mov byte [eax], 0x0
-	mov dword [esp+0x8], 0xe
+	mov dword [esp+0x8], 14
 	movzx eax, byte [g_parse_user]
 	mov [esp+0x4], eax
 	mov [esp], esi
@@ -3761,8 +3692,7 @@ yyparse_1840:
 	mov edi, [ebp-0x2810]
 	jmp yyparse_420
 yyparse_310:
-	mov eax, [0xd5cc920]
-	add eax, 0x58
+	call yy_stdout
 	mov [yyout], eax
 	jmp yyparse_550
 yyparse_390:
@@ -3944,7 +3874,7 @@ yyparse_770:
 	mov [ebp-0x2811], al
 	jmp yyparse_800
 yyparse_470:
-	mov dword [esp+0x8], _cstring_fatal_flex_scann1
+	mov dword [esp+0x4], _cstring_fatal_flex_scann1
 	jmp yyparse_810
 yyparse_460:
 	mov ecx, [yytext]
@@ -4250,7 +4180,7 @@ yyparse_1130:
 	mov [ebp-0x2800], eax
 	jmp yyparse_360
 yyparse_1060:
-	mov dword [esp+0x8], _cstring_fatal_error__sca
+	mov dword [esp+0x4], _cstring_fatal_error__sca
 	jmp yyparse_810
 yyparse_1050:
 	mov eax, edx
